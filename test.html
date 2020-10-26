@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+<title>Read File (via User Input selection)</title>
+<script src="./dist/parser/sqlParser.js"></script>
+<script>
+
+    var sqlParser = window.sqlParser;
+    var sqlScriptText;
+
+    function test(event) {
+        var input = event.target;
+
+        var reader = new FileReader();
+        reader.onload = function(){
+            sqlScriptText = reader.result;
+            console.log(sqlScriptText);
+            console.log(sqlParser);
+
+            displayContents(sqlScriptText);
+
+            var ast = sqlParser.parse(sqlScriptText);
+            var sql = sqlParser.stringify(ast);
+            console.log(ast);
+            console.log(sql);
+
+        };
+        reader.readAsText(input.files[0]);
+        
+        
+    }
+
+    function displayContents(txt) {
+        var el = document.getElementById('demo'); 
+        el.innerHTML = txt; //display output in DOM
+    }  
+    
+</script>
+</head>
+
+<body>
+
+<h1>Show file content</h1>
+
+
+<div id="container">    
+    <input type='file' onchange='test(event)'><br>
+    <br/>
+    <hr/>   
+    <h3>Contents of the Text file:</h3>
+    <pre>
+<code id="demo"></code>
+    </pre>
+</div>
+
+</body>
+</html> 
