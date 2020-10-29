@@ -1,5 +1,3 @@
-
-
 # @builtin "whitespace.ne"
 @builtin "number.ne"
 
@@ -9,8 +7,45 @@
     return o;
   }
 
-  const reserved=require('./reserved.json');
-  const valid_function_identifiers=['LEFT','RIGHT','REPLACE','MOD']
+  const reserved = [
+    "ACCESSIBLE", "ADD", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC",
+    "ASENSITIVE", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY",
+    "CALL", "CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK",
+    "COLLATE", "COLUMN", "CONDITION", "CONSTRAINT", "CONTINUE", "CONVERT",
+    "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+    "CURRENT_USER", "CURSOR", "DATABASE", "DATABASES", "DAY_HOUR",
+    "DAY_MICROSECOND", "DAY_MINUTE", "DAY_SECOND", "DEC", "DECIMAL", "DECLARE",
+    "DEFAULT", "DELAYED", "DELETE", "DESC", "DESCRIBE", "DETERMINISTIC",
+    "DISTINCT", "DIV", "DOUBLE", "DROP", "DUAL", "EACH", "ELSE", "ELSEIF",
+    "ENCLOSED", "ESCAPED", "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH",
+    "FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM", "FULLTEXT",
+    "GET", "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY", "HOUR_MICROSECOND",
+    "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IN", "INDEX", "INFILE",
+    "INNER", "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3",
+    "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS",
+    "IO_BEFORE_GTIDS", "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL",
+    "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD",
+    "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT",
+    "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT",
+    "MATCH", "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT",
+    "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL", "NOT",
+    "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTION",
+    "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE", "PARTITION",
+    "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS",
+    "READ_WRITE", "REAL", "REFERENCES", "REGEXP", "RELEASE", "RENAME",
+    "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE",
+    "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND", "SELECT", "SENSITIVE",
+    "SEPARATOR", "SET", "SHOW", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL",
+    "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQL_BIG_RESULT",
+    "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING",
+    "STRAIGHT_JOIN", "TABLE", "TERMINATED", "THEN", "TINYBLOB", "TINYINT",
+    "TINYTEXT", "TO", "TOP", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION",
+    "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE", "USING",
+    "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR",
+    "VARCHARACTER", "VARYING", "WHEN", "WHERE", "WHILE", "WITH", "WRITE",
+    "XOR", "YEAR_MONTH", "ZEROFILL"
+  ];
+  const valid_function_identifiers = ['LEFT', 'RIGHT', 'REPLACE', 'MOD']
 %}
 
 main -> sql (_ ";" _| _) {% d => d[0] %}
@@ -73,7 +108,7 @@ table_exp ->
         groupby: (d[2] || [])[1],
         having: (d[3] || [])[1],
         order: (d[4] || [])[1],
-				limit: (d[5] || [])[1]
+        limit: (d[5] || [])[1]
       })
     %}
 
@@ -86,8 +121,8 @@ from_clause ->
   | FROM __ subquery {% d => ({type: 'from', subquery: d[2]}) %}
 
 group_by_clause ->
-		group_by_clause_inner {% d => d[0] %}
-	| group_by_clause_inner __ WITH __ ROLLUP {% d => Object.assign({}, d[0], {with_rollup:true}) %}
+    group_by_clause_inner {% d => d[0] %}
+  | group_by_clause_inner __ WITH __ ROLLUP {% d => Object.assign({}, d[0], {with_rollup:true}) %}
 
 group_by_clause_inner ->
     GROUP __ BY __ selection_column_comma_list {% d => ({ type: 'group_by', columns: d[4] }) %}
@@ -116,17 +151,17 @@ table_ref_commalist ->
 
 @{%
   function tableRef(d, onOffset, alias, using) {
-		if(!onOffset) onOffset = 0;
+    if(!onOffset) onOffset = 0;
     const ref = {
       type: 'table_ref',
       side: ((d[1]||[])[1]),
       left: d[0],
       right: d[4],
       on: d[onOffset+8],
-			using
+      using
     };
-		if(alias) ref.alias = d[6];
-		return ref;
+    if(alias) ref.alias = d[6];
+    return ref;
   }
 %}
 
@@ -135,22 +170,19 @@ table_ref ->
   | table {% d => d[0] %}
   | table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ table __ ON __ expr {% x=>tableRef(x,0) %}
   | table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ table __ ON ("(" _ expr _ ")") {% x=>tableRef(x,0) %}
-	| table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ query_spec (AS __ | __) identifier __ ON __ expr {% x=>tableRef(x,2,true) %}
-	| table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ query_spec (AS __ | __) identifier __ ON ("(" _ expr _ ")") {% x=>tableRef(x,2,true) %}
-
-	| table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ table __ USING _ "(" _ identifier_comma_list _ ")" {% x=>tableRef(x,2, false,true) %}
-	| table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ query_spec (AS __ | __) identifier __ USING _ "(" _ identifier_comma_list _ ")" {% x=>tableRef(x,4, true,true) %}
+  | table_ref (__ LEFT __ | __ RIGHT __ | __ INNER __ | __) JOIN __ table __ USING _ "(" _ identifier_comma_list _ ")" {% x=>tableRef(x,2, false,true) %}
 
 
 identifier_comma_list ->
-		identifier {% d => [d[0]] %}
-	| identifier_comma_list _ "," _ identifier {% d => d[0].concat(d[2]) %}
+    identifier {% d => [d[0]] %}
+  | identifier_comma_list _ "," _ identifier {% d => d[0].concat(d[2]) %}
 
 table ->
     identifier {% d => ({type: 'table', table: d[0].value}) %}
   | identifier "." identifier {% d => ({type: 'table', table: d[0].value +'.'+ d[2].value }) %}
   | identifier "." identifier ( __ AS __ | __ ) identifier {% d => ({type: 'table', table: d[0].value +'.'+ d[2].value, alias: d[4].value }) %}
   | identifier ( __ AS __ | __) identifier {% d => ({type: 'table', table: d[0].value, alias: d[2].value}) %}
+  | query_spec ( __ AS __ | __) identifier {% d => ({type: 'table', subquery: d[0].value, alias: d[2].value}) %}
 
 where_clause ->
     WHERE __ expr {% d => ({type:'where', condition: d[2]}) %}
@@ -219,14 +251,14 @@ two_op_expr ->
   | pre_two_op_expr XOR post_one_op_expr {% opExpr('xor') %}
   | pre_two_op_expr AND post_one_op_expr {% opExpr('and') %}
   | pre_two_op_expr "&&" post_one_op_expr {% opExpr('and') %}
-	| one_op_expr {% d => d[0] %}
+  | one_op_expr {% d => d[0] %}
 
 pre_two_op_expr ->
     two_op_expr __ {% d => d[0] %}
   | "(" _ two_op_expr _ ")" {% d => d[2] %}
 
 one_op_expr ->
-		NOT post_boolean_primary {% notOp %}
+    NOT post_boolean_primary {% notOp %}
   | "!" post_boolean_primary {% notOp %}
   | pre_boolean_primary IS (__ NOT | null) __ (TRUE | FALSE | UNKNOWN)
   | boolean_primary {% d => d[0] %}
@@ -265,7 +297,7 @@ post_boolean_primary ->
 
 comparison_type ->
     "=" {% d => d[0] %}
-	| "<=>" {% d => d[0] %}
+  | "<=>" {% d => d[0] %}
   | "<>" {% d => d[0] %}
   | "<" {% d => d[0] %}
   | "<=" {% d => d[0] %}
@@ -349,13 +381,14 @@ post_bit_expr ->
 simple_expr ->
     literal {% d => d[0] %}
   | identifier {% d => d[0] %}
+  | "@" identifier {% d => ({type: 'variable', value: d[1].value}) %}
   | function_call {% d => d[0] %}
   # | simple_expr COLLATE
   | "(" _ expr_comma_list _ ")" {% d => d[2] %}
   | subquery {% d => d[0] %}
   | EXISTS _ subquery {% d => ({type: 'exists', query: d[2]}) %}
   | case_statement {% d => d[0] %}
-	| BINARY __ simple_expr {% d => ({type: 'binary_statement', expr: d[2]}) %}
+  | BINARY __ simple_expr {% d => ({type: 'binary_statement', expr: d[2]}) %}
   | if_statement {% d => d[0] %}
   | cast_statement {% d => d[0] %}
   | convert_statement {% d => d[0] %}
@@ -691,13 +724,13 @@ Z -> "Z" | "z"
 # Replacing whitespace.ne - need to in order to support comments
 # Whitespace: `_` is optional, `__` is mandatory.
 _  ->
-		wschar:* {% function(d) {return null;} %}
-	| wschar:* comment wschar:* {% function(d) {return null;} %}
+    wschar:* {% function(d) {return null;} %}
+  | wschar:* comment wschar:* {% function(d) {return null;} %}
 __ ->
-		wschar:+ {% function(d) {return null;} %}
-	| wschar:+ comment wschar:* {% function(d) {return null;} %}
+    wschar:+ {% function(d) {return null;} %}
+  | wschar:+ comment wschar:* {% function(d) {return null;} %}
 
 comment ->
-	("#" | "--" wschar) [^\n]:+ ([\n]) {% x => null %}
+  ("#" | "--" wschar) [^\n]:+ ([\n]) {% x => null %}
 
 wschar -> [ \t\n\v\f] {% id %}

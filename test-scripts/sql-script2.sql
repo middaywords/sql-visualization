@@ -26,9 +26,9 @@ SELECT
 FROM IL_Cash 
 WHERE pnl_date IN (
                 @pnl_date,
-                @prev me_date
+                @prev_me_date
             )
-AND prod type <> 'Monetary Claim' 
+AND prod_type <> 'Monetary Claim' 
 GROUP BY prod_num
 ) px 
 ON mspa.prod_num = px.prod_oum

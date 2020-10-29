@@ -1,22 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
-    <script src="/vendor/nearley.js"></script>
-    <script src="/js/reserved.js"></script>
-    <script src="/js/grammar.js"></script>
-    <script src="/js/index.js"></script>
+    <title>ACE in Action</title>
 
     <meta charset="UTF-8" />
 
-    <!--link href="/vendor/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="/views/elect/index.css" rel="stylesheet" /-->
+    <!--link href="/vendor/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet" /-->
+    <link href="css/index.css" rel="stylesheet" />
   </head>
 
   <body>
     <section id="alert"></section>
 
+    <h1>Show file content</h1>
+
+    <section id="container">
+      <div id="editor"></div>
+
+      <p>
+        Or input from file:
+        <input id="file-input" type="file" />
+      </p>
+
+      <button id="start-parse">Go!</button>
+    </section>
+
     <section id="script">
-      <!--script src="/controllers/config.js"></script-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"
+        integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw=="
+        crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-sql.min.js" integrity="sha512-wsE6/Wq6h/sr67KuoliMHvnS5FGqI1oW/gvbLgYKtWyfCChHi/T6tt8i+qvaIEdA9+JiW+d+51cA5fRdlfjGtw==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/snippets/sql.min.js" integrity="sha512-8kHXK9GUJDQZQLcTKO5kb0cH+r2rC+HMDlPqwA5HSbjgiJmRS5f3KM5C+6wPKwmCzKO3n7dzKAgVbKEjaqhazQ==" crossorigin="anonymous"></script>
+
+      <script src="vendor/nearley.js"></script>
+      <script src="js/grammar.js"></script>
+      <script src="js/index.js"></script>
     </section>
   </body>
 </html>
