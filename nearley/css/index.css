@@ -1,3 +1,257 @@
+body {
+  font-family: Menlo, Monacco, monospace;
+  margin: 0;
+}
+
+.github-corner {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#script {
+  visibility: hidden;
+}s
+
+.text-center {
+  text-align: center;
+}
+
+a {
+  text-decoration: none;
+}
+
+.title {
+  font-size: 30px;
+  margin-bottom: 20px;
+}
+
+
+/* footer */
+footer {
+  font-size: 0.8em;
+  text-align: center;
+  padding: 1em 0;
+  line-height: 1.2em;
+}
+
+footer p {
+  margin: unset;
+}
+
+
 #editor {
   height: 200px;
 }
+
+.header {
+  padding: 20px; }
+  .header .hide {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    cursor: pointer;
+    color: #00e;
+    font-size: 12px; }
+  .header .show {
+    cursor: pointer;
+    padding: 10px;
+    font-size: 12px; }
+  .header.small {
+    padding: 0; }
+
+.tabs {
+  margin-bottom: -1px;
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: scroll;
+  flex-shrink: 0; }
+  .tabs .tab {
+    display: inline-block;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    padding-right: 10px;
+    margin: 0 5px; }
+    .tabs .tab.active {
+      border-bottom-color: #fff; }
+      .tabs .tab.active input {
+        color: #000; }
+      .tabs .tab.active .x {
+        color: #000; }
+    .tabs .tab input {
+      color: #888;
+      padding: 0;
+      font-size: inherit;
+      font-family: inherit;
+      outline: none;
+      border: 0;
+      width: 50px; }
+    .tabs .tab .x {
+      color: #ccc;
+      display: inline-block;
+      margin-left: 10px;
+      cursor: pointer; }
+      .tabs .tab .x:hover {
+        color: red; }
+  .tabs .add {
+    display: inline-block;
+    padding: 10px;
+    cursor: pointer; }
+    .tabs .add.grey {
+      color: #48f; }
+
+.editor {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #ddd;
+  position: relative; }
+  .editor .cm-wrap {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    outline: none;
+    position: relative;
+    display: flex;
+    font-size: 15px;
+    flex-direction: column; }
+    .editor .cm-wrap .CodeMirror {
+      height: 100%;
+      box-sizing: border-box;
+      flex: 1;
+      font-family: Menlo, Monaco, monospace; }
+      .editor .cm-wrap .CodeMirror .CodeMirror-lines {
+        padding: 20px; }
+  .editor .shadow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 0 5px 2px white inset;
+    z-index: 4;
+    pointer-events: none; }
+  .editor .errors {
+    white-space: pre;
+    background: rgba(255, 0, 0, 0.07);
+    padding: 20px; }
+
+.tester {
+  flex: 1;
+  display: flex;
+  flex-direction: column; }
+
+.tests {
+  flex: 1;
+  overflow: scroll; }
+
+.test {
+  border-left: 5px solid #f66;
+  position: relative;
+  box-shadow: 0 1px 0 #ddd;
+  margin-bottom: 1px; }
+  .test.match {
+    border-left-color: #61e885; }
+  .test textarea {
+    border: 0;
+    outline: none;
+    font-size: 15px;
+    font-family: Menlo, Monaco, monospace;
+    padding: 20px;
+    width: 100%;
+    padding-right: 50px;
+    box-sizing: border-box;
+    resize: none;
+    height: 58px; }
+  .test .output {
+    color: #777;
+    padding: 20px;
+    padding-top: 5px;
+    padding-right: 50px; }
+
+.test-add {
+  padding: 10px 20px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 -1px 0px #ddd;
+  z-index: 1;
+  border-right: 1px solid #ddd;
+  flex-grow: 1; }
+
+.test-generate {
+  padding: 10px 20px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 -1px 0px #ddd;
+  z-index: 1; }
+
+.test-create {
+  display: flex; }
+
+.test-x {
+  height: 100%;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  right: 0;
+  padding: 0 20px;
+  cursor: pointer; }
+
+.title {
+  font-size: 30px; }
+
+.title-wrap {
+  margin-bottom: 20px; }
+
+.grey {
+  color: #aaa;
+  font-weight: normal; }
+  .grey .CodeMirror-lines {
+    padding: 20px; }
+
+.mobile-info {
+  padding: 10px;
+  margin-top: 15px;
+  border: 1px solid #ffc904;
+  display: none; }
+
+.download-button {
+  position: absolute;
+  bottom: 5px;
+  cursor: pointer;
+  right: 10px;
+  padding: 5px 10px;
+  opacity: 0.5; }
+  .download-button:hover {
+    opacity: 1; }
+
+@media (max-width: 850px) {
+  .cm-wrap {
+    font-size: 12px !important; }
+  .titles {
+    padding: 10px 0; }
+    .titles .grey {
+      display: none; } }
+
+@media (max-width: 700px) {
+  .mobile-info {
+    display: block; }
+  .playground-body {
+    display: block; }
+  .editor {
+    border-right: 0px;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ccc; }
+  .cm-wrap {
+    font-size: 10px !important;
+    display: block !important; }
+    .cm-wrap .CodeMirror {
+      height: auto !important; }
+      .cm-wrap .CodeMirror .CodeMirror-scroll {
+        height: auto; }
+  .hide {
+    display: none !important; }
+  .titles {
+    display: none !important; }
+  .tester {
+    display: block; } }
+

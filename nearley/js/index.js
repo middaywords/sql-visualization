@@ -1,64 +1,102 @@
 "use strict"
 
-const sqlExample = `SELECT
-    mspa.prod_num AS prod_num,
-    mspa_qty AS mspa_qty,
-    isnull(px_mdve, 0.0) AS px_move,
-    mspa.mspa_qcy - isnull(px.px_move, 0.0) AS diff
-FROM
-(
-SELECT
-    prod_num,
-    sum(dr_qty - cr_qty) AS mspa_qty
-FROM
-    IL_Cash_3
-WHERE pnl_date = @pnl_date
-GROUP BY prod_num
-) AS mspa
-LEFT JOIN
-(
-SELECT
-    prod_num,
-    sum(CASE
-            WHEN pnl_date = @pnl_date
-            then closing_position
-            ELSE -1 * (closing_position)
-            END
-    ) AS px_move
-FROM IL_Cash
-WHERE pnl_date IN (
-                @pnl_date,
-                @prev_me_date
-            )
-AND prod_type <> 'Monetary Claim'
-GROUP BY prod_num
-) px
-ON mspa.prod_num = px.prod_oum`
-'select * from users;'
-
-const editor = ace.edit("editor")
-editor.session.setMode("ace/mode/sql")
-editor.setValue(sqlExample)
+const example_list = ['sql-script2', 'sql-script3']
 
 
-function displayContents (txt) {
-  let el = document.getElementById('sql-content')
-  el.innerHTML = txt
-  displayContents(inputText)
-  console.log(parser.results)
+function getStorage (tag) {
+  return localStorage.getItem('saved-' + tag)
 }
 
 
-document.getElementById('file-input').onchange = async function (event) {
-  const inputFile = event.target.files[0]
-  const inputText = await inputFile.text()
-  editor.setValue(inputText)
+function setStorage (tag, code) {
+  localStorage.setItem('saved-' + tag, code)
 }
 
 
-document.getElementById('start-parse').onclick = function (event) {
-  const sql = editor.getValue()
-  const parser = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
-  parser.feed(sql)
-  console.log(parser.results)
+function updateEditor (editor, code, tag) {
+  editor.setValue(code, true)
+  if (tag) {
+    setStorage(tag, code)
+  }
 }
+
+
+function getTabName (navbar, tab) {
+  if (tab) {
+    return 'code'
+  }
+  return 'code'
+}
+
+
+function switchTab (navbar, newTab, editor) {
+  setStorage(getTabName(navbar), editor.getValue())
+  updateEditor(editor, getStorage(getTabName(navbar, newTab)))
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  /* editor */
+  const editor = ace.edit('editor')
+  editor.session.setMode("ace/mode/sql")
+  //editor.renderer.setShowGutter(false)
+
+  /* code save and load */
+  const savedCode = getStorage(getTabName())
+  if (savedCode !== null) {
+    updateEditor(editor, savedCode)
+  }
+  window.addEventListener('beforeunload', function (e) {
+    saveStorage(getTabName(), editor.getValue())
+  })
+
+  /* file input */
+  const input_file = document.getElementById('file-input')
+  async function loadFile () {
+    const inputFile = input_file.files[0]
+    if (!inputFile) {
+      return
+    }
+    const content = await inputFile.text()
+    if (input_file) {
+      updateEditor(editor, content, getTabName())
+    }
+  }
+  input_file.addEventListener('change', loadFile)
+  document.getElementById('load-file').addEventListener('click', loadFile)
+
+  /* example */
+  const select_example = document.getElementById('example-select')
+  for (let i = 0; i < example_list.length; i++){
+    let opt = document.createElement('option')
+    opt.value = example_list[i]
+    opt.innerHTML = example_list[i]
+    select_example.appendChild(opt)
+  }
+  function loadExample () {
+    const exampleName = select_example.value
+    if (!exampleName) {
+      return
+    }
+    const xhr = new XMLHttpRequest()
+    xhr.addEventListener('load', function () {
+      updateEditor(editor, this.responseText, getTabName())
+    })
+    xhr.open('GET', 'examples/' + exampleName + '.sql')
+    xhr.send()
+  }
+  select_example.addEventListener('change', loadExample)
+  document.getElementById('load-example').addEventListener('click', loadExample)
+
+  /* parser */
+  document.getElementById('start-parse').addEventListener('click', function (event) {
+    const sql = editor.getValue()
+    if (!sql) {
+      return
+    }
+    setStorage(default_tag, sql)
+    const parser = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
+    parser.feed(sql)
+    console.log(parser.results)
+  })
+}, false)
