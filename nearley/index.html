@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
-    <title>Nearley Parser Playground | Parse Grammars Online, From The Comfort Of Your Home!</title>
+    <title>SQL Visualization</title>
 
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
@@ -17,19 +17,58 @@
         integrity="sha512-4buFEvwrnbqow5DmgXVCJIHskJMxbAemoim0xwT6XonnRAVB3zK6cmYO4eX6dMa0PnuTXK+UyfW+6RizMfBypg=="
         crossorigin="anonymous" />
     <link rel="stylesheet" href="css/github-corner.css" />
+    <link rel="stylesheet" href="css/nooverflow.css" />
     <link rel="stylesheet" href="css/index.css" />
   </head>
 
   <body>
-    <section id="alert"></section>
+    <section id="dialog">
+      <div class="dialog-container" id="dialog-saveload" aria-hidden="true">
+        <div tabindex="-1" data-a11y-dialog-hide></div>
+        <dialog aria-labelledby="dialog-title">
+          <div class="dialog-header">
+            <h3 class="dialog-title">Load and save editor text</h3>
+            <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window" aria-hidden="true">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <div class="dialog-body">
+            <p>
+              Input from file:
+              <input id="input-file" type="file" />
+            </p>
+
+            <p>
+              <label for="select-example">Load examples?</label>
+              <select name="example" id="select-example">
+                <option value="" selected="selected"></option>
+              </select>
+            </p>
+          </div>
+        </dialog>
+      </div>
+
+      <div class="dialog-container" id="dialog-about" aria-hidden="true">
+        <div tabindex="-1" data-a11y-dialog-hide></div>
+        <dialog aria-labelledby="dialog-title">
+          <div class="dialog-header">
+            <h3 class="dialog-title">About</h3>
+            <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window" aria-hidden="true">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
+
+          <div class="dialog-body">
+            <p>Source: <a href="https://github.com/middaywords/sql-visualization">GitHub</a></p>
+          </div>
+        </dialog>
+      </div>
+    </section>
 
     <header>
-      <h1 class="title">⛹ Nearley Parser Playground</h1>
-      <nav class="navbar">
-        <!--li>
-          <a href="#index">首页</a>
-        </li-->
-      </nav>
+      <h1 class="title">⛹ SQL Visualization</h1>
+
       <a href="https://github.com/middaywords/sql-visualization" class="github-corner hidden-xs-down" aria-label="View source on Github">
         <svg width="80" height="80" viewBox="0 0 250 250" style="fill:#151513; color:#fff; border: 0; float:right"
              aria-hidden="true">
@@ -45,33 +84,56 @@
     </header>
 
     <section id="main">
-      <div id="editor"></div>
+      <div id="left-panel" class="panel">
+        <div id="editor-bar">
+          <select name="fontsize" id="select-fontsize" aria-label="Change font size" alt="Change font size">
+            <option value="" selected="selected">A</option>
+            <option value="8">8</option>
+            <option value=9>9</option>
+            <option value=10>10</option>
+            <option value=11>11</option>
+            <option value=12>12</option>
+            <option value=13>13</option>
+            <option value=14>14</option>
+            <option value=15>15</option>
+            <option value=16>16</option>
+            <option value=17>17</option>
+            <option value=18>18</option>
+            <option value=19>19</option>
+            <option value=20>20</option>
+            <option value=21>21</option>
+            <option value=22>22</option>
+            <option value=23>23</option>
+            <option value=24>24</option>
+            <option value=25>25</option>
+            <option value=26>26</option>
+            <option value=27>27</option>
+            <option value=28>28</option>
+            <option value=29>29</option>
+            <option value=30>30</option>
+          </select>
+          <button title="Load or save text" aria-label="Load or save text" id="btn-saveload">
+            <span>💾</span>
+            <span class="hideable">Save/Load</span>
+          </button>
+          <button class="flex-float-right-first" id="btn-show-parse-error">❌</button>
+          <button class="flex-float-right" title="Show info about this program" aria-label="Show info about this program" id="btn-about">
+            <span>⚙️</span>
+            <span class="hideable">Settings/About</span>
+          </button>
+        </div>
+        <div id="editor"></div>
+      </div>
 
-      <p>
-        Or input from file:
-        <input id="file-input" type="file" />
-        <button id="load-file">Load</button>
-      </p>
+      <div id="right-panel" class="panel">
+        <div id="diagram-container">
+          <div id="item-left" class="item"></div>
+          <div id="item-right" class="item" style="margin-left:50px;"></div>
+        </div>
 
-      <p>
-        <label for="example-select">Load examples?</label>
-        <select name="example" id="example-select">
-          <option value="" selected="selected"></option>
-        </select>
-        <button id="load-example">Load</button>
-      </p>
-
-      <button id="start-parse">Go!</button>
-
-      <div id="diagram-container">
-        <div id="item-left" class="item"></div>
-        <div id="item-right" class="item" style="margin-left:50px;"></div>
+        <div id="parse-result"></div>
       </div>
     </section>
-
-    <footer>
-      <p>Source: <a href="https://github.com/middaywords/sql-visualization">GitHub</a></p>
-    </footer>
 
     <section id="script">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"
@@ -86,9 +148,19 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.0/js/jsplumb.min.js"
           integrity="sha512-vVRd/8cnj1FEVrL2EPkHJ+om6q7hlTFgoq7Wixfby4hNneUomS+G5zkwE1IIc+Ru8HZ1hxDfH8lcIsXpydfVmw=="
           crossorigin="anonymous"></script>
-      <script src="vendor/nearley.js"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.2/split.min.js"
+          integrity="sha512-to2k78YjoNUq8+hnJS8AwFg/nrLRFLdYYalb18SlcsFRXavCOTfBF3lNyplKkLJeB8YjKVTb1FPHGSy9sXfSdg=="
+          crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+      <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+      <script src="https://unpkg.com/prop-types@15.7.2/prop-types.min.js" crossorigin></script>
+      <script src="https://unpkg.com/nearley@2.19.7/lib/nearley.js" crossorigin></script>
+      <script src="https://unpkg.com/a11y-dialog@5.4.2/a11y-dialog.js" crossorigin></script>
+      <script src="vendor/is-node.js"></script>
+      <script src="vendor/react-inspector.js"></script>
       <script src="js/grammar.js"></script>
       <script src="js/drawer.js"></script>
+      <script src="js/nooverflow.js"></script>
       <script src="js/index.js"></script>
     </section>
   </body>

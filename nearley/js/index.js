@@ -1,6 +1,7 @@
-"use strict"
+'use strict'
 
-const example_list = ['sql-script2', 'sql-script3']
+const SMALL_SCREEN_WIDTH = 544
+const EXAMPLE_LIST = ['sql-script2', 'sql-script3']
 
 
 function getStorage (tag) {
@@ -10,14 +11,6 @@ function getStorage (tag) {
 
 function setStorage (tag, code) {
   localStorage.setItem('saved-' + tag, code)
-}
-
-
-function updateEditor (editor, code, tag) {
-  editor.setValue(code, true)
-  if (tag) {
-    setStorage(tag, code)
-  }
 }
 
 
@@ -35,68 +28,143 @@ function switchTab (navbar, newTab, editor) {
 }
 
 
-document.addEventListener('DOMContentLoaded', function () {
-  /* editor */
-  const editor = ace.edit('editor')
-  editor.session.setMode("ace/mode/sql")
-  //editor.renderer.setShowGutter(false)
+const splitterMain = Split(['#left-panel', '#right-panel'], {
+  elementStyle: (dimension, size, gutterSize) => ({
+    'flex-basis': `calc(${size}% - ${gutterSize}px)`,
+    'width': `calc(${size}% + .5 * ${gutterSize}px)`,
+  }),
+  gutterStyle: (dimension, gutterSize) => ({
+    'flex-basis':  `${gutterSize}px`,
+  }),
+})
+const dialogAbout = new A11yDialog(document.getElementById('dialog-about'))
+document.getElementById('btn-about').addEventListener('click', function (event) {
+  dialogAbout.show()
+})
 
-  /* code save and load */
-  const savedCode = getStorage(getTabName())
-  if (savedCode !== null) {
-    updateEditor(editor, savedCode)
+
+/* parser */
+const splitterParser = Split(['#diagram-container', '#parse-result'], {
+  gutterSize: 5,
+  direction: 'vertical',
+  elementStyle: (dimension, size, gutterSize) => ({
+    'flex-basis': `calc(${size}% - ${gutterSize}px)`,
+    'height': `calc(${size}% - ${gutterSize}px)`,
+  }),
+  gutterStyle: (dimension, gutterSize) => ({
+    'flex-basis':  `${gutterSize}px`,
+  }),
+})
+const btnShowParseError = document.getElementById('btn-show-parse-error')
+function parse (action, editor) {
+  btnShowParseError.classList.remove('warning')
+  const text = editor.getValue()
+  if (!text) {
+    return
   }
-  window.addEventListener('beforeunload', function (e) {
-    saveStorage(getTabName(), editor.getValue())
+  setStorage(getTabName(), text)
+  const parser = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
+  try {
+    parser.feed(text)
+  } catch (e) {
+    //console.log(e)
+    btnShowParseError.classList.add('warning')
+    return
+  }
+  if (parser.results.length === 0) {
+    return
+  }
+  ReactDOM.render(React.createElement(ReactInspector.ObjectInspector, {
+    data: parser.results[0]
+  }), document.getElementById('parse-result'))
+}
+
+
+/* editor */
+const editor = ace.edit('editor')
+editor.session.setMode('ace/mode/sql')
+
+function updateEditor (editor, code, tag) {
+  editor.setValue(code, true)
+  if (tag) {
+    setStorage(tag, code)
+  }
+  parse(undefined, editor)
+}
+editor.on('change', parse)
+
+function adjustEditorHeight () {
+  document.getElementById('editor').style.height =
+    window.innerHeight -
+    document.getElementsByTagName('header')[0].offsetHeight -
+    document.getElementById('editor-bar').offsetHeight -
+    (window.innerWidth > SMALL_SCREEN_WIDTH ? 0 :
+      document.getElementById('right-panel').offsetHeight) + 'px'
+}
+window.addEventListener('resize', adjustEditorHeight)
+adjustEditorHeight()
+
+document.getElementById('select-fontsize').addEventListener('change', function (event) {
+  const fontsize = event.target.value
+  if (!fontsize) {
+    return
+  }
+  editor.setFontSize(+fontsize)
+  event.target.value = ''
+})
+
+noOverflow(document.getElementById('editor-bar'))
+
+
+/* code save and load */
+const savedCode = getStorage(getTabName())
+if (savedCode) {
+  updateEditor(editor, savedCode)
+}
+window.addEventListener('beforeunload', function (e) {
+  setStorage(getTabName(), editor.getValue())
+})
+const dialogSaveload = new A11yDialog(document.getElementById('dialog-saveload'))
+document.getElementById('btn-saveload').addEventListener('click', function (event) {
+  dialogSaveload.show()
+})
+
+
+/* file input */
+const inputFile = document.getElementById('input-file')
+async function loadFile () {
+  const file = inputFile.files[0]
+  if (!file) {
+    return
+  }
+  const content = await file.text()
+  if (inputFile) {
+    updateEditor(editor, content, getTabName())
+  }
+  dialogSaveload.hide()
+}
+inputFile.addEventListener('change', loadFile)
+
+
+/* example */
+const selectExample = document.getElementById('select-example')
+for (let i = 0; i < EXAMPLE_LIST.length; i++){
+  let opt = document.createElement('option')
+  opt.value = EXAMPLE_LIST[i]
+  opt.innerHTML = EXAMPLE_LIST[i]
+  selectExample.appendChild(opt)
+}
+function loadExample () {
+  const exampleName = selectExample.value
+  if (!exampleName) {
+    return
+  }
+  const xhr = new XMLHttpRequest()
+  xhr.addEventListener('load', function () {
+    updateEditor(editor, this.responseText, getTabName())
   })
-
-  /* file input */
-  const input_file = document.getElementById('file-input')
-  async function loadFile () {
-    const inputFile = input_file.files[0]
-    if (!inputFile) {
-      return
-    }
-    const content = await inputFile.text()
-    if (input_file) {
-      updateEditor(editor, content, getTabName())
-    }
-  }
-  input_file.addEventListener('change', loadFile)
-  document.getElementById('load-file').addEventListener('click', loadFile)
-
-  /* example */
-  const select_example = document.getElementById('example-select')
-  for (let i = 0; i < example_list.length; i++){
-    let opt = document.createElement('option')
-    opt.value = example_list[i]
-    opt.innerHTML = example_list[i]
-    select_example.appendChild(opt)
-  }
-  function loadExample () {
-    const exampleName = select_example.value
-    if (!exampleName) {
-      return
-    }
-    const xhr = new XMLHttpRequest()
-    xhr.addEventListener('load', function () {
-      updateEditor(editor, this.responseText, getTabName())
-    })
-    xhr.open('GET', 'examples/' + exampleName + '.sql')
-    xhr.send()
-  }
-  select_example.addEventListener('change', loadExample)
-  document.getElementById('load-example').addEventListener('click', loadExample)
-
-  /* parser */
-  document.getElementById('start-parse').addEventListener('click', function (event) {
-    const sql = editor.getValue()
-    if (!sql) {
-      return
-    }
-    setStorage(default_tag, sql)
-    const parser = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
-    parser.feed(sql)
-    console.log(parser.results)
-  })
-}, false)
+  xhr.open('GET', 'examples/' + exampleName + '.sql')
+  xhr.send()
+  dialogSaveload.hide()
+}
+selectExample.addEventListener('change', loadExample)
