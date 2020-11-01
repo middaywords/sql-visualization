@@ -56,31 +56,30 @@ const splitterParser = Split(['#diagram-container', '#parse-result'], {
   }),
 })
 const btnShowParseError = document.getElementById('btn-show-parse-error')
-function parse (action, editor) {
+function parseText (action, editor) {
   btnShowParseError.classList.remove('warning')
   const text = editor.getValue()
   if (!text) {
     return
   }
   setStorage(getTabName(), text)
-  const parser = new nearley.Parser(grammar.ParserRules, grammar.ParserStart)
+  let result
   try {
-    parser.feed(text)
+    result = parseSql(text)
   } catch (e) {
     //console.log(e)
     btnShowParseError.classList.add('warning')
     return
   }
-  if (parser.results.length === 0) {
-    return
-  }
   ReactDOM.render(React.createElement(ReactInspector.ObjectInspector, {
-    data: parser.results[0]
+    data: result
   }), document.getElementById('parse-result'))
 }
 
 
 /* editor */
+noOverflow(document.getElementById('editor-bar'))
+
 const editor = ace.edit('editor')
 editor.session.setMode('ace/mode/sql')
 
@@ -89,9 +88,9 @@ function updateEditor (editor, code, tag) {
   if (tag) {
     setStorage(tag, code)
   }
-  parse(undefined, editor)
+  parseText(undefined, editor)
 }
-editor.on('change', parse)
+editor.on('change', parseText)
 
 function adjustEditorHeight () {
   document.getElementById('editor').style.height =
@@ -110,18 +109,26 @@ document.getElementById('select-fontsize').addEventListener('change', function (
     return
   }
   editor.setFontSize(+fontsize)
+  localStorage.setItem('editor-fontsize', fontsize)
   event.target.value = ''
 })
-
-noOverflow(document.getElementById('editor-bar'))
+const oldFontsize = localStorage.getItem('editor-fontsize')
+if (oldFontsize) {
+  editor.setFontSize(+oldFontsize)
+}
 
 
 /* code save and load */
 const savedCode = getStorage(getTabName())
 if (savedCode) {
   updateEditor(editor, savedCode)
+  const oldCursorPosition = localStorage.getItem('editor-cursor')
+  if (oldCursorPosition) {
+    editor.moveCursorToPosition(JSON.parse(oldCursorPosition))
+  }
 }
 window.addEventListener('beforeunload', function (e) {
+  localStorage.setItem('editor-cursor', JSON.stringify(editor.getCursorPosition()))
   setStorage(getTabName(), editor.getValue())
 })
 const dialogSaveload = new A11yDialog(document.getElementById('dialog-saveload'))
@@ -168,3 +175,13 @@ function loadExample () {
   dialogSaveload.hide()
 }
 selectExample.addEventListener('change', loadExample)
+
+
+//debug
+function p () {
+  const text = editor.getValue()
+  if (!text) {
+    return
+  }
+  return parseSql(text)
+}

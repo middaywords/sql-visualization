@@ -16,6 +16,11 @@ function draw () {
 }
 
 
+function simplifyParseResult (result) {
+
+}
+
+
 jsPlumb.ready(function () {
   draw()
 })
