@@ -1,0 +1,200 @@
+/* global declaration */
+body {
+  font-family: Menlo, Monacco, monospace;
+  height: 100%;
+}
+
+.text-center {
+  text-align: center;
+}
+
+a {
+  text-decoration: none;
+}
+
+button, input, select {
+  cursor: pointer;
+}
+
+button, select {
+  border: 1px solid #CCC;
+  border-radius: .2rem;
+  background-color: #f8f9fa;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+button:hover, select:not(.selecting):hover {
+  background-color: #e2e6ea;
+  border-color: #dae0e5;
+}
+
+select {
+  padding: 1px 6px;
+}
+
+.h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6 {
+  margin: .5rem 0;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.flex-float-right-first {
+  margin-left: auto;
+  order: 2;
+}
+
+.flex-float-right {
+  order: 2;
+}
+
+
+/* dialog */
+[data-a11y-dialog-native] > :first-child {
+  display: none;
+}
+
+dialog {
+  transition: transform .3s ease-out;
+  border: 1px solid rgba(0,0,0,.2);
+  border-radius: .3rem;
+  padding: 0;
+}
+
+dialog[open] {
+  display: block;
+}
+
+.dialog-container[aria-hidden='true'] {
+  display: none;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+  border-top-left-radius: calc(.3rem - 1px);
+  border-top-right-radius: calc(.3rem - 1px);
+}
+
+.dialog-btn-close {
+  float: right;
+}
+
+.dialog-body {
+  padding: 1rem;
+}
+
+
+/* gadget */
+.github-corner {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#script {
+  display: none;
+}
+
+
+/* main body */
+header {
+  padding: .67em;
+}
+
+.title {
+  margin-top: 0;
+}
+
+#main {
+  display: flex;
+}
+
+@media only screen and ( max-width: 544px ) {
+  #main {
+    flex-direction: column;
+  }
+}
+
+#left-panel {
+  margin-right: -2.5px;
+}
+
+#right-panel {
+  margin-left: -2.5px;
+}
+
+.gutter {
+  box-sizing: border-box;
+  background-color: #f8f9fa;
+  background-clip: content-box;
+  transition: opacity .2s ease;
+}
+
+.gutter.gutter-horizontal {
+  cursor: ew-resize;
+  padding: 0 2.5px;
+}
+
+.gutter.gutter-vertical {
+  cursor: ns-resize;
+  height: 5px;
+}
+
+#editor-bar {
+  background-color: #f8f9fa;
+  border: 1px solid #d2d3d4;
+  display: flex;
+}
+
+#editor-bar > * {
+  padding: .25rem .5rem;
+  font-size: .875rem;
+  line-height: 2;
+  border-color: #f8f9fa;
+  display: flex;
+}
+
+#select-fontsize {
+  font-family: serif;
+  font-weight: bold;
+}
+
+#btn-show-parse-error {
+  visibility: hidden;
+  width: 0;
+}
+
+#btn-show-parse-error.warning {
+  visibility: unset;
+  width: unset;
+}
+
+#editor {
+  width: 100%;
+}
+
+#diagram-container, #parse-result {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+#diagram-container {
+  position: relative;
+}
+
+
+/* footer */
+footer {
+  flex: 0 1 40px;
+  font-size: 0.8em;
+  text-align: center;
+  padding: 1em 0;
+  line-height: 1.2em;
+}
+
+footer p {
+  margin: unset;
+}

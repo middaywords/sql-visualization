@@ -8,21 +8,59 @@ function id(x) { return x[0]; }
     return o;
   }
 
-  const valid_function_identifiers=['LEFT','RIGHT','REPLACE','MOD']
+  const reserved = [
+    "ACCESSIBLE", "ADD", "ALL", "ALTER", "ANALYZE", "AND", "AS", "ASC",
+    "ASENSITIVE", "BEFORE", "BETWEEN", "BIGINT", "BINARY", "BLOB", "BOTH", "BY",
+    "CALL", "CASCADE", "CASE", "CHANGE", "CHAR", "CHARACTER", "CHECK",
+    "COLLATE", "COLUMN", "CONDITION", "CONSTRAINT", "CONTINUE", "CONVERT",
+    "CREATE", "CROSS", "CURRENT_DATE", "CURRENT_TIME", "CURRENT_TIMESTAMP",
+    "CURRENT_USER", "CURSOR", "DATABASE", "DATABASES", "DAY_HOUR",
+    "DAY_MICROSECOND", "DAY_MINUTE", "DAY_SECOND", "DEC", "DECIMAL", "DECLARE",
+    "DEFAULT", "DELAYED", "DELETE", "DESC", "DESCRIBE", "DETERMINISTIC",
+    "DISTINCT", "DIV", "DOUBLE", "DROP", "DUAL", "EACH", "ELSE", "ELSEIF",
+    "ENCLOSED", "ESCAPED", "EXISTS", "EXIT", "EXPLAIN", "FALSE", "FETCH",
+    "FLOAT", "FLOAT4", "FLOAT8", "FOR", "FORCE", "FOREIGN", "FROM", "FULLTEXT",
+    "GET", "GRANT", "GROUP", "HAVING", "HIGH_PRIORITY", "HOUR_MICROSECOND",
+    "HOUR_MINUTE", "HOUR_SECOND", "IF", "IGNORE", "IN", "INDEX", "INFILE",
+    "INNER", "INOUT", "INSENSITIVE", "INSERT", "INT", "INT1", "INT2", "INT3",
+    "INT4", "INT8", "INTEGER", "INTERVAL", "INTO", "IO_AFTER_GTIDS",
+    "IO_BEFORE_GTIDS", "IS", "ITERATE", "JOIN", "KEY", "KEYS", "KILL",
+    "LEADING", "LEAVE", "LEFT", "LIKE", "LIMIT", "LINEAR", "LINES", "LOAD",
+    "LOCALTIME", "LOCALTIMESTAMP", "LOCK", "LONG", "LONGBLOB", "LONGTEXT",
+    "LOOP", "LOW_PRIORITY", "MASTER_BIND", "MASTER_SSL_VERIFY_SERVER_CERT",
+    "MATCH", "MAXVALUE", "MEDIUMBLOB", "MEDIUMINT", "MEDIUMTEXT", "MIDDLEINT",
+    "MINUTE_MICROSECOND", "MINUTE_SECOND", "MOD", "MODIFIES", "NATURAL", "NOT",
+    "NO_WRITE_TO_BINLOG", "NULL", "NUMERIC", "ON", "OPTIMIZE", "OPTION",
+    "OPTIONALLY", "OR", "ORDER", "OUT", "OUTER", "OUTFILE", "PARTITION",
+    "PRECISION", "PRIMARY", "PROCEDURE", "PURGE", "RANGE", "READ", "READS",
+    "READ_WRITE", "REAL", "REFERENCES", "REGEXP", "RELEASE", "RENAME",
+    "REQUIRE", "RESIGNAL", "RESTRICT", "RETURN", "REVOKE", "RIGHT", "RLIKE",
+    "SCHEMA", "SCHEMAS", "SECOND_MICROSECOND", "SELECT", "SENSITIVE",
+    "SEPARATOR", "SET", "SHOW", "SMALLINT", "SPATIAL", "SPECIFIC", "SQL",
+    "SQLEXCEPTION", "SQLSTATE", "SQLWARNING", "SQL_BIG_RESULT",
+    "SQL_CALC_FOUND_ROWS", "SQL_SMALL_RESULT", "SSL", "STARTING",
+    "STRAIGHT_JOIN", "TABLE", "TERMINATED", "THEN", "TINYBLOB", "TINYINT",
+    "TINYTEXT", "TO", "TOP", "TRAILING", "TRIGGER", "TRUE", "UNDO", "UNION",
+    "UNIQUE", "UNLOCK", "UNSIGNED", "UPDATE", "USAGE", "USE", "USING",
+    "UTC_DATE", "UTC_TIME", "UTC_TIMESTAMP", "VALUES", "VARBINARY", "VARCHAR",
+    "VARCHARACTER", "VARYING", "WHEN", "WHERE", "WHILE", "WITH", "WRITE",
+    "XOR", "YEAR_MONTH", "ZEROFILL"
+  ];
+  const valid_function_identifiers = ['LEFT', 'RIGHT', 'REPLACE', 'MOD']
 
 
   function tableRef(d, onOffset, alias, using) {
-		if(!onOffset) onOffset = 0;
+    if(!onOffset) onOffset = 0;
     const ref = {
       type: 'table_ref',
       side: ((d[1]||[])[1]),
       left: d[0],
       right: d[4],
       on: d[onOffset+8],
-			using
+      using
     };
-		if(alias) ref.alias = d[6];
-		return ref;
+    if(alias) ref.alias = d[6];
+    return ref;
   }
 
 
@@ -66,7 +104,7 @@ var grammar = {
     ParserRules: [
     {"name": "unsigned_int$ebnf$1", "symbols": [/[0-9]/]},
     {"name": "unsigned_int$ebnf$1", "symbols": [/[0-9]/, "unsigned_int$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "unsigned_int", "symbols": ["unsigned_int$ebnf$1"], "postprocess":
+    {"name": "unsigned_int", "symbols": ["unsigned_int$ebnf$1"], "postprocess": 
         function(d) {
             return parseInt(d[0].join(""));
         }
@@ -77,7 +115,7 @@ var grammar = {
     {"name": "int$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "int$ebnf$2", "symbols": [/[0-9]/]},
     {"name": "int$ebnf$2", "symbols": [/[0-9]/, "int$ebnf$2"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "int", "symbols": ["int$ebnf$1", "int$ebnf$2"], "postprocess":
+    {"name": "int", "symbols": ["int$ebnf$1", "int$ebnf$2"], "postprocess": 
         function(d) {
             if (d[0]) {
                 return parseInt(d[0][0]+d[1].join(""));
@@ -93,7 +131,7 @@ var grammar = {
     {"name": "unsigned_decimal$ebnf$2$subexpression$1", "symbols": [{"literal":"."}, "unsigned_decimal$ebnf$2$subexpression$1$ebnf$1"]},
     {"name": "unsigned_decimal$ebnf$2", "symbols": ["unsigned_decimal$ebnf$2$subexpression$1"], "postprocess": id},
     {"name": "unsigned_decimal$ebnf$2", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "unsigned_decimal", "symbols": ["unsigned_decimal$ebnf$1", "unsigned_decimal$ebnf$2"], "postprocess":
+    {"name": "unsigned_decimal", "symbols": ["unsigned_decimal$ebnf$1", "unsigned_decimal$ebnf$2"], "postprocess": 
         function(d) {
             return parseFloat(
                 d[0].join("") +
@@ -110,7 +148,7 @@ var grammar = {
     {"name": "decimal$ebnf$3$subexpression$1", "symbols": [{"literal":"."}, "decimal$ebnf$3$subexpression$1$ebnf$1"]},
     {"name": "decimal$ebnf$3", "symbols": ["decimal$ebnf$3$subexpression$1"], "postprocess": id},
     {"name": "decimal$ebnf$3", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "decimal", "symbols": ["decimal$ebnf$1", "decimal$ebnf$2", "decimal$ebnf$3"], "postprocess":
+    {"name": "decimal", "symbols": ["decimal$ebnf$1", "decimal$ebnf$2", "decimal$ebnf$3"], "postprocess": 
         function(d) {
             return parseFloat(
                 (d[0] || "") +
@@ -119,7 +157,7 @@ var grammar = {
             );
         }
         },
-    {"name": "percentage", "symbols": ["decimal", {"literal":"%"}], "postprocess":
+    {"name": "percentage", "symbols": ["decimal", {"literal":"%"}], "postprocess": 
         function(d) {
             return d[0]/100;
         }
@@ -140,7 +178,7 @@ var grammar = {
     {"name": "jsonfloat$ebnf$4$subexpression$1", "symbols": [/[eE]/, "jsonfloat$ebnf$4$subexpression$1$ebnf$1", "jsonfloat$ebnf$4$subexpression$1$ebnf$2"]},
     {"name": "jsonfloat$ebnf$4", "symbols": ["jsonfloat$ebnf$4$subexpression$1"], "postprocess": id},
     {"name": "jsonfloat$ebnf$4", "symbols": [], "postprocess": function(d) {return null;}},
-    {"name": "jsonfloat", "symbols": ["jsonfloat$ebnf$1", "jsonfloat$ebnf$2", "jsonfloat$ebnf$3", "jsonfloat$ebnf$4"], "postprocess":
+    {"name": "jsonfloat", "symbols": ["jsonfloat$ebnf$1", "jsonfloat$ebnf$2", "jsonfloat$ebnf$3", "jsonfloat$ebnf$4"], "postprocess": 
         function(d) {
             return parseFloat(
                 (d[0] || "") +
@@ -150,14 +188,14 @@ var grammar = {
             );
         }
         },
-    {"name": "main$subexpression$1", "symbols": ["_", {"literal":";","pos":19}, "_"]},
+    {"name": "main$subexpression$1", "symbols": ["_", {"literal":";","pos":18}, "_"]},
     {"name": "main$subexpression$1", "symbols": ["_"]},
     {"name": "main", "symbols": ["sql", "main$subexpression$1"], "postprocess": d => d[0]},
     {"name": "sql", "symbols": ["manipulative_statement"], "postprocess": d => d[0]},
     {"name": "sql", "symbols": ["create_view"], "postprocess": d => d[0]},
     {"name": "create_view$subexpression$1", "symbols": ["__", "OR", "__", "REPLACE", "__"]},
     {"name": "create_view$subexpression$1", "symbols": ["__"]},
-    {"name": "create_view", "symbols": ["CREATE", "create_view$subexpression$1", "VIEW", "__", "table", "__", "AS", "__", "query_spec"], "postprocess":
+    {"name": "create_view", "symbols": ["CREATE", "create_view$subexpression$1", "VIEW", "__", "table", "__", "AS", "__", "query_spec"], "postprocess": 
         d => ({
           type: 'create_view',
           table: d[4],
@@ -168,12 +206,12 @@ var grammar = {
     {"name": "manipulative_statement", "symbols": ["select_statement"], "postprocess": d => d[0]},
     {"name": "select_statement", "symbols": ["query_spec"], "postprocess": d => d[0]},
     {"name": "top_spec", "symbols": ["TOP", "__", "int"], "postprocess": d => d[2]},
-    {"name": "query_spec", "symbols": [{"literal":"(","pos":113}, "_", "query_spec", "_", {"literal":")","pos":121}], "postprocess": d => d[2]},
+    {"name": "query_spec", "symbols": [{"literal":"(","pos":112}, "_", "query_spec", "_", {"literal":")","pos":120}], "postprocess": d => d[2]},
     {"name": "query_spec$subexpression$1", "symbols": ["__", "top_spec"]},
     {"name": "query_spec$subexpression$1", "symbols": []},
     {"name": "query_spec$subexpression$2", "symbols": ["__", "all_distinct", "__"]},
     {"name": "query_spec$subexpression$2", "symbols": ["__"]},
-    {"name": "query_spec", "symbols": ["SELECT", "query_spec$subexpression$1", "query_spec$subexpression$2", "selection"], "postprocess":
+    {"name": "query_spec", "symbols": ["SELECT", "query_spec$subexpression$1", "query_spec$subexpression$2", "selection"], "postprocess": 
         d => ({
           type: 'select',
           top: (d[1]||[])[1],
@@ -185,7 +223,7 @@ var grammar = {
     {"name": "query_spec$subexpression$3", "symbols": []},
     {"name": "query_spec$subexpression$4", "symbols": ["__", "all_distinct", "__"]},
     {"name": "query_spec$subexpression$4", "symbols": ["__"]},
-    {"name": "query_spec", "symbols": ["SELECT", "query_spec$subexpression$3", "query_spec$subexpression$4", "selection", "__", "table_exp"], "postprocess":
+    {"name": "query_spec", "symbols": ["SELECT", "query_spec$subexpression$3", "query_spec$subexpression$4", "selection", "__", "table_exp"], "postprocess": 
         d => ({
           type: 'select',
           top: (d[1]||[])[1],
@@ -194,7 +232,7 @@ var grammar = {
           table_exp: d[5]
         })
             },
-    {"name": "query_spec", "symbols": ["query_spec", "__", "UNION", "__", "query_spec"], "postprocess":
+    {"name": "query_spec", "symbols": ["query_spec", "__", "UNION", "__", "query_spec"], "postprocess": 
         d => ({
           type: 'union',
           left: d[0],
@@ -211,16 +249,16 @@ var grammar = {
     {"name": "table_exp$subexpression$4", "symbols": []},
     {"name": "table_exp$subexpression$5", "symbols": ["__", "limit_clause"]},
     {"name": "table_exp$subexpression$5", "symbols": []},
-    {"name": "table_exp", "symbols": ["from_clause", "table_exp$subexpression$1", "table_exp$subexpression$2", "table_exp$subexpression$3", "table_exp$subexpression$4", "table_exp$subexpression$5"], "postprocess":
-              d => ({
-                type: 'from_table',
-                from: d[0],
-                where: (d[1] || [])[1],
-                groupby: (d[2] || [])[1],
-                having: (d[3] || [])[1],
-                order: (d[4] || [])[1],
-        limit: (d[5] || [])[1]
-              })
+    {"name": "table_exp", "symbols": ["from_clause", "table_exp$subexpression$1", "table_exp$subexpression$2", "table_exp$subexpression$3", "table_exp$subexpression$4", "table_exp$subexpression$5"], "postprocess": 
+        d => ({
+          type: 'from_table',
+          from: d[0],
+          where: (d[1] || [])[1],
+          groupby: (d[2] || [])[1],
+          having: (d[3] || [])[1],
+          order: (d[4] || [])[1],
+          limit: (d[5] || [])[1]
+        })
             },
     {"name": "all_distinct", "symbols": ["ALL"], "postprocess": d => ({type: 'all'})},
     {"name": "all_distinct", "symbols": ["DISTINCT"], "postprocess": d => ({type: 'distinct'})},
@@ -229,11 +267,11 @@ var grammar = {
     {"name": "group_by_clause", "symbols": ["group_by_clause_inner"], "postprocess": d => d[0]},
     {"name": "group_by_clause", "symbols": ["group_by_clause_inner", "__", "WITH", "__", "ROLLUP"], "postprocess": d => Object.assign({}, d[0], {with_rollup:true})},
     {"name": "group_by_clause_inner", "symbols": ["GROUP", "__", "BY", "__", "selection_column_comma_list"], "postprocess": d => ({ type: 'group_by', columns: d[4] })},
-    {"name": "group_by_clause_inner", "symbols": ["GROUP", "__", "BY", {"literal":"(","pos":343}, "_", "selection_column_comma_list", "_", {"literal":")","pos":351}], "postprocess": d => ({ type: 'group_by', columns: d[6] })},
-    {"name": "selection", "symbols": [{"literal":"*","pos":359}], "postprocess": d => ({type:'select_all'})},
+    {"name": "group_by_clause_inner", "symbols": ["GROUP", "__", "BY", {"literal":"(","pos":342}, "_", "selection_column_comma_list", "_", {"literal":")","pos":350}], "postprocess": d => ({ type: 'group_by', columns: d[6] })},
+    {"name": "selection", "symbols": [{"literal":"*","pos":358}], "postprocess": d => ({type:'select_all'})},
     {"name": "selection", "symbols": ["selection_column_comma_list"], "postprocess": d => d[0]},
     {"name": "selection_column_comma_list", "symbols": ["selection_column"], "postprocess": d => ({type: 'selection_columns', columns: [d[0]]})},
-    {"name": "selection_column_comma_list", "symbols": ["selection_column_comma_list", "_", {"literal":",","pos":383}, "_", "selection_column"], "postprocess":
+    {"name": "selection_column_comma_list", "symbols": ["selection_column_comma_list", "_", {"literal":",","pos":382}, "_", "selection_column"], "postprocess": 
         d => ({
           type: 'selection_columns',
           columns: (d[0].columns||[]).concat([d[4]])
@@ -242,8 +280,8 @@ var grammar = {
     {"name": "selection_column", "symbols": ["expr"], "postprocess": d => ({type: 'column', expression: drill(d[0])})},
     {"name": "selection_column", "symbols": ["expr", "__", "AS", "__", "identifier"], "postprocess": d => ({type: 'column', expression: drill(d[0]), alias: d[4]})},
     {"name": "table_ref_commalist", "symbols": ["table_ref"], "postprocess": d => ({table_refs: [d[0]]})},
-    {"name": "table_ref_commalist", "symbols": ["table_ref_commalist", "_", {"literal":",","pos":427}, "_", "table_ref"], "postprocess": d => ({ table_refs: (d[0].table_refs||[]).concat(d[4]) })},
-    {"name": "table_ref", "symbols": [{"literal":"(","pos":442}, "_", "table_ref", "_", {"literal":")","pos":450}], "postprocess": d => d[2]},
+    {"name": "table_ref_commalist", "symbols": ["table_ref_commalist", "_", {"literal":",","pos":426}, "_", "table_ref"], "postprocess": d => ({ table_refs: (d[0].table_refs||[]).concat(d[4]) })},
+    {"name": "table_ref", "symbols": [{"literal":"(","pos":441}, "_", "table_ref", "_", {"literal":")","pos":449}], "postprocess": d => d[2]},
     {"name": "table_ref", "symbols": ["table"], "postprocess": d => d[0]},
     {"name": "table_ref$subexpression$1", "symbols": ["__", "LEFT", "__"]},
     {"name": "table_ref$subexpression$1", "symbols": ["__", "RIGHT", "__"]},
@@ -254,53 +292,34 @@ var grammar = {
     {"name": "table_ref$subexpression$2", "symbols": ["__", "RIGHT", "__"]},
     {"name": "table_ref$subexpression$2", "symbols": ["__", "INNER", "__"]},
     {"name": "table_ref$subexpression$2", "symbols": ["__"]},
-    {"name": "table_ref$subexpression$3", "symbols": [{"literal":"(","pos":551}, "_", "expr", "_", {"literal":")","pos":559}]},
+    {"name": "table_ref$subexpression$3", "symbols": [{"literal":"(","pos":550}, "_", "expr", "_", {"literal":")","pos":558}]},
     {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$2", "JOIN", "__", "table", "__", "ON", "table_ref$subexpression$3"], "postprocess": x=>tableRef(x,0)},
     {"name": "table_ref$subexpression$4", "symbols": ["__", "LEFT", "__"]},
     {"name": "table_ref$subexpression$4", "symbols": ["__", "RIGHT", "__"]},
     {"name": "table_ref$subexpression$4", "symbols": ["__", "INNER", "__"]},
     {"name": "table_ref$subexpression$4", "symbols": ["__"]},
-    {"name": "table_ref$subexpression$5", "symbols": ["AS", "__"]},
-    {"name": "table_ref$subexpression$5", "symbols": ["__"]},
-    {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$4", "JOIN", "__", "query_spec", "table_ref$subexpression$5", "identifier", "__", "ON", "__", "expr"], "postprocess": x=>tableRef(x,2,true)},
-    {"name": "table_ref$subexpression$6", "symbols": ["__", "LEFT", "__"]},
-    {"name": "table_ref$subexpression$6", "symbols": ["__", "RIGHT", "__"]},
-    {"name": "table_ref$subexpression$6", "symbols": ["__", "INNER", "__"]},
-    {"name": "table_ref$subexpression$6", "symbols": ["__"]},
-    {"name": "table_ref$subexpression$7", "symbols": ["AS", "__"]},
-    {"name": "table_ref$subexpression$7", "symbols": ["__"]},
-    {"name": "table_ref$subexpression$8", "symbols": [{"literal":"(","pos":679}, "_", "expr", "_", {"literal":")","pos":687}]},
-    {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$6", "JOIN", "__", "query_spec", "table_ref$subexpression$7", "identifier", "__", "ON", "table_ref$subexpression$8"], "postprocess": x=>tableRef(x,2,true)},
-    {"name": "table_ref$subexpression$9", "symbols": ["__", "LEFT", "__"]},
-    {"name": "table_ref$subexpression$9", "symbols": ["__", "RIGHT", "__"]},
-    {"name": "table_ref$subexpression$9", "symbols": ["__", "INNER", "__"]},
-    {"name": "table_ref$subexpression$9", "symbols": ["__"]},
-    {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$9", "JOIN", "__", "table", "__", "USING", "_", {"literal":"(","pos":736}, "_", "identifier_comma_list", "_", {"literal":")","pos":744}], "postprocess": x=>tableRef(x,2, false,true)},
-    {"name": "table_ref$subexpression$10", "symbols": ["__", "LEFT", "__"]},
-    {"name": "table_ref$subexpression$10", "symbols": ["__", "RIGHT", "__"]},
-    {"name": "table_ref$subexpression$10", "symbols": ["__", "INNER", "__"]},
-    {"name": "table_ref$subexpression$10", "symbols": ["__"]},
-    {"name": "table_ref$subexpression$11", "symbols": ["AS", "__"]},
-    {"name": "table_ref$subexpression$11", "symbols": ["__"]},
-    {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$10", "JOIN", "__", "query_spec", "table_ref$subexpression$11", "identifier", "__", "USING", "_", {"literal":"(","pos":804}, "_", "identifier_comma_list", "_", {"literal":")","pos":812}], "postprocess": x=>tableRef(x,4, true,true)},
+    {"name": "table_ref", "symbols": ["table_ref", "table_ref$subexpression$4", "JOIN", "__", "table", "__", "USING", "_", {"literal":"(","pos":607}, "_", "identifier_comma_list", "_", {"literal":")","pos":615}], "postprocess": x=>tableRef(x,2, false,true)},
     {"name": "identifier_comma_list", "symbols": ["identifier"], "postprocess": d => [d[0]]},
-    {"name": "identifier_comma_list", "symbols": ["identifier_comma_list", "_", {"literal":",","pos":830}, "_", "identifier"], "postprocess": d => d[0].concat(d[2])},
+    {"name": "identifier_comma_list", "symbols": ["identifier_comma_list", "_", {"literal":",","pos":633}, "_", "identifier"], "postprocess": d => d[0].concat(d[2])},
     {"name": "table", "symbols": ["identifier"], "postprocess": d => ({type: 'table', table: d[0].value})},
-    {"name": "table", "symbols": ["identifier", {"literal":".","pos":850}, "identifier"], "postprocess": d => ({type: 'table', table: d[0].value +'.'+ d[2].value })},
+    {"name": "table", "symbols": ["identifier", {"literal":".","pos":653}, "identifier"], "postprocess": d => ({type: 'table', table: d[0].value +'.'+ d[2].value })},
     {"name": "table$subexpression$1", "symbols": ["__", "AS", "__"]},
     {"name": "table$subexpression$1", "symbols": ["__"]},
-    {"name": "table", "symbols": ["identifier", {"literal":".","pos":860}, "identifier", "table$subexpression$1", "identifier"], "postprocess": d => ({type: 'table', table: d[0].value +'.'+ d[2].value, alias: d[4].value })},
+    {"name": "table", "symbols": ["identifier", {"literal":".","pos":663}, "identifier", "table$subexpression$1", "identifier"], "postprocess": d => ({type: 'table', table: d[0].value +'.'+ d[2].value, alias: d[4].value })},
     {"name": "table$subexpression$2", "symbols": ["__", "AS", "__"]},
     {"name": "table$subexpression$2", "symbols": ["__"]},
     {"name": "table", "symbols": ["identifier", "table$subexpression$2", "identifier"], "postprocess": d => ({type: 'table', table: d[0].value, alias: d[2].value})},
+    {"name": "table$subexpression$3", "symbols": ["__", "AS", "__"]},
+    {"name": "table$subexpression$3", "symbols": ["__"]},
+    {"name": "table", "symbols": ["query_spec", "table$subexpression$3", "identifier"], "postprocess": d => ({type: 'table', subquery: d[0].value, alias: d[2].value})},
     {"name": "where_clause", "symbols": ["WHERE", "__", "expr"], "postprocess": d => ({type:'where', condition: d[2]})},
-    {"name": "where_clause", "symbols": ["WHERE", {"literal":"(","pos":919}, "_", "expr", "_", {"literal":")","pos":927}], "postprocess": d => ({type:'where', condition: d[3]})},
+    {"name": "where_clause", "symbols": ["WHERE", {"literal":"(","pos":743}, "_", "expr", "_", {"literal":")","pos":751}], "postprocess": d => ({type:'where', condition: d[3]})},
     {"name": "having_clause", "symbols": ["HAVING", "__", "expr"], "postprocess": d => ({type: 'having', condition: d[2]})},
-    {"name": "having_clause", "symbols": ["HAVING", {"literal":"(","pos":947}, "_", "expr", "_", {"literal":")","pos":955}], "postprocess": d => ({type: 'having', condition: d[3]})},
+    {"name": "having_clause", "symbols": ["HAVING", {"literal":"(","pos":771}, "_", "expr", "_", {"literal":")","pos":779}], "postprocess": d => ({type: 'having', condition: d[3]})},
     {"name": "order_clause", "symbols": ["ORDER", "__", "BY", "__", "order_statement_comma_list"], "postprocess": d => ({type: 'order', order: d[4].order})},
-    {"name": "order_clause", "symbols": ["ORDER", "__", "BY", {"literal":"(","pos":983}, "_", "order_statement_comma_list", "_", {"literal":")","pos":991}], "postprocess": d => ({type: 'order', order: d[5].order})},
+    {"name": "order_clause", "symbols": ["ORDER", "__", "BY", {"literal":"(","pos":807}, "_", "order_statement_comma_list", "_", {"literal":")","pos":815}], "postprocess": d => ({type: 'order', order: d[5].order})},
     {"name": "order_statement_comma_list", "symbols": ["order_statement"], "postprocess": d => ({order: [d[0]]})},
-    {"name": "order_statement_comma_list", "symbols": ["order_statement_comma_list", "_", {"literal":",","pos":1009}, "_", "order_statement"], "postprocess":
+    {"name": "order_statement_comma_list", "symbols": ["order_statement_comma_list", "_", {"literal":",","pos":833}, "_", "order_statement"], "postprocess": 
         d => ({order: (d[0].order||[]).concat(d[4])})
             },
     {"name": "order_statement", "symbols": ["expr"], "postprocess": d => ({type:'order_statement', value:d[0]})},
@@ -319,9 +338,9 @@ var grammar = {
     {"name": "two_op_expr", "symbols": ["pre_two_op_expr", "two_op_expr$string$2", "post_one_op_expr"], "postprocess": opExpr('and')},
     {"name": "two_op_expr", "symbols": ["one_op_expr"], "postprocess": d => d[0]},
     {"name": "pre_two_op_expr", "symbols": ["two_op_expr", "__"], "postprocess": d => d[0]},
-    {"name": "pre_two_op_expr", "symbols": [{"literal":"(","pos":1162}, "_", "two_op_expr", "_", {"literal":")","pos":1170}], "postprocess": d => d[2]},
+    {"name": "pre_two_op_expr", "symbols": [{"literal":"(","pos":986}, "_", "two_op_expr", "_", {"literal":")","pos":994}], "postprocess": d => d[2]},
     {"name": "one_op_expr", "symbols": ["NOT", "post_boolean_primary"], "postprocess": notOp},
-    {"name": "one_op_expr", "symbols": [{"literal":"!","pos":1186}, "post_boolean_primary"], "postprocess": notOp},
+    {"name": "one_op_expr", "symbols": [{"literal":"!","pos":1010}, "post_boolean_primary"], "postprocess": notOp},
     {"name": "one_op_expr$subexpression$1", "symbols": ["__", "NOT"]},
     {"name": "one_op_expr$subexpression$1", "symbols": []},
     {"name": "one_op_expr$subexpression$2", "symbols": ["TRUE"]},
@@ -330,14 +349,14 @@ var grammar = {
     {"name": "one_op_expr", "symbols": ["pre_boolean_primary", "IS", "one_op_expr$subexpression$1", "__", "one_op_expr$subexpression$2"]},
     {"name": "one_op_expr", "symbols": ["boolean_primary"], "postprocess": d => d[0]},
     {"name": "post_one_op_expr", "symbols": ["__", "one_op_expr"], "postprocess": d => d[1]},
-    {"name": "post_one_op_expr", "symbols": [{"literal":"(","pos":1240}, "_", "one_op_expr", "_", {"literal":")","pos":1248}], "postprocess": d => d[2]},
+    {"name": "post_one_op_expr", "symbols": [{"literal":"(","pos":1064}, "_", "one_op_expr", "_", {"literal":")","pos":1072}], "postprocess": d => d[2]},
     {"name": "pre_expr", "symbols": ["expr", "__"], "postprocess": d => d[0]},
-    {"name": "pre_expr", "symbols": [{"literal":"(","pos":1264}, "_", "expr", "_", {"literal":")","pos":1272}], "postprocess": d => d[2]},
+    {"name": "pre_expr", "symbols": [{"literal":"(","pos":1088}, "_", "expr", "_", {"literal":")","pos":1096}], "postprocess": d => d[2]},
     {"name": "post_expr", "symbols": ["__", "expr"], "postprocess": d => d[1]},
-    {"name": "post_expr", "symbols": [{"literal":"(","pos":1288}, "_", "expr", "_", {"literal":")","pos":1296}], "postprocess": d => d[2]},
-    {"name": "mid_expr", "symbols": [{"literal":"(","pos":1304}, "_", "expr", "_", {"literal":")","pos":1312}], "postprocess": d => d[2]},
-    {"name": "mid_expr", "symbols": ["__", {"literal":"(","pos":1320}, "_", "expr", "_", {"literal":")","pos":1328}], "postprocess": d => d[3]},
-    {"name": "mid_expr", "symbols": [{"literal":"(","pos":1334}, "_", "expr", "_", {"literal":")","pos":1342}, "__"], "postprocess": d => d[2]},
+    {"name": "post_expr", "symbols": [{"literal":"(","pos":1112}, "_", "expr", "_", {"literal":")","pos":1120}], "postprocess": d => d[2]},
+    {"name": "mid_expr", "symbols": [{"literal":"(","pos":1128}, "_", "expr", "_", {"literal":")","pos":1136}], "postprocess": d => d[2]},
+    {"name": "mid_expr", "symbols": ["__", {"literal":"(","pos":1144}, "_", "expr", "_", {"literal":")","pos":1152}], "postprocess": d => d[3]},
+    {"name": "mid_expr", "symbols": [{"literal":"(","pos":1158}, "_", "expr", "_", {"literal":")","pos":1166}, "__"], "postprocess": d => d[2]},
     {"name": "mid_expr", "symbols": ["__", "expr", "__"], "postprocess": d => d[1]},
     {"name": "boolean_primary$subexpression$1", "symbols": ["__", "NOT"]},
     {"name": "boolean_primary$subexpression$1", "symbols": []},
@@ -347,19 +366,19 @@ var grammar = {
     {"name": "boolean_primary$subexpression$2", "symbols": ["ALL"]},
     {"name": "boolean_primary", "symbols": ["boolean_primary", "_", "comparison_type", "_", "boolean_primary$subexpression$2", "subquery"]},
     {"name": "boolean_primary", "symbols": ["predicate"], "postprocess": d => d[0]},
-    {"name": "pre_boolean_primary", "symbols": [{"literal":"(","pos":1426}, "_", "boolean_primary", "_", {"literal":")","pos":1434}], "postprocess": d => d[2]},
+    {"name": "pre_boolean_primary", "symbols": [{"literal":"(","pos":1250}, "_", "boolean_primary", "_", {"literal":")","pos":1258}], "postprocess": d => d[2]},
     {"name": "pre_boolean_primary", "symbols": ["boolean_primary", "__"], "postprocess": d => d[0]},
-    {"name": "post_boolean_primary", "symbols": [{"literal":"(","pos":1450}, "_", "boolean_primary", "_", {"literal":")","pos":1458}], "postprocess": d => d[2]},
+    {"name": "post_boolean_primary", "symbols": [{"literal":"(","pos":1274}, "_", "boolean_primary", "_", {"literal":")","pos":1282}], "postprocess": d => d[2]},
     {"name": "post_boolean_primary", "symbols": ["__", "boolean_primary"], "postprocess": d => d[1]},
-    {"name": "comparison_type", "symbols": [{"literal":"=","pos":1474}], "postprocess": d => d[0]},
+    {"name": "comparison_type", "symbols": [{"literal":"=","pos":1298}], "postprocess": d => d[0]},
     {"name": "comparison_type$string$1", "symbols": [{"literal":"<"}, {"literal":"="}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "comparison_type", "symbols": ["comparison_type$string$1"], "postprocess": d => d[0]},
     {"name": "comparison_type$string$2", "symbols": [{"literal":"<"}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "comparison_type", "symbols": ["comparison_type$string$2"], "postprocess": d => d[0]},
-    {"name": "comparison_type", "symbols": [{"literal":"<","pos":1492}], "postprocess": d => d[0]},
+    {"name": "comparison_type", "symbols": [{"literal":"<","pos":1316}], "postprocess": d => d[0]},
     {"name": "comparison_type$string$3", "symbols": [{"literal":"<"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "comparison_type", "symbols": ["comparison_type$string$3"], "postprocess": d => d[0]},
-    {"name": "comparison_type", "symbols": [{"literal":">","pos":1504}], "postprocess": d => d[0]},
+    {"name": "comparison_type", "symbols": [{"literal":">","pos":1328}], "postprocess": d => d[0]},
     {"name": "comparison_type$string$4", "symbols": [{"literal":">"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "comparison_type", "symbols": ["comparison_type$string$4"], "postprocess": d => d[0]},
     {"name": "comparison_type$string$5", "symbols": [{"literal":"!"}, {"literal":"="}], "postprocess": function joiner(d) {return d.join('');}},
@@ -378,7 +397,7 @@ var grammar = {
         }) },
     {"name": "in_predicate$subexpression$2", "symbols": ["NOT", "__"]},
     {"name": "in_predicate$subexpression$2", "symbols": []},
-    {"name": "in_predicate", "symbols": ["pre_bit_expr", "in_predicate$subexpression$2", "IN", "_", {"literal":"(","pos":1588}, "_", "expr_comma_list", "_", {"literal":")","pos":1596}], "postprocess":  d => ({
+    {"name": "in_predicate", "symbols": ["pre_bit_expr", "in_predicate$subexpression$2", "IN", "_", {"literal":"(","pos":1412}, "_", "expr_comma_list", "_", {"literal":")","pos":1420}], "postprocess":  d => ({
           type: 'in',
           value: d[0],
           not: d[1],
@@ -386,7 +405,7 @@ var grammar = {
         }) },
     {"name": "between_predicate$subexpression$1", "symbols": ["NOT", "__"]},
     {"name": "between_predicate$subexpression$1", "symbols": []},
-    {"name": "between_predicate", "symbols": ["pre_bit_expr", "between_predicate$subexpression$1", "BETWEEN", "mid_bit_expr", "AND", "post_bit_expr"], "postprocess":
+    {"name": "between_predicate", "symbols": ["pre_bit_expr", "between_predicate$subexpression$1", "BETWEEN", "mid_bit_expr", "AND", "post_bit_expr"], "postprocess": 
         d => ({
           type: 'between',
           value: d[0],
@@ -395,13 +414,13 @@ var grammar = {
           upper: d[5]
         })
             },
-    {"name": "mid_bit_expr", "symbols": [{"literal":"(","pos":1630}, "_", "bit_expr", "_", {"literal":")","pos":1638}], "postprocess": d => d[2]},
-    {"name": "mid_bit_expr", "symbols": ["__", {"literal":"(","pos":1646}, "_", "bit_expr", "_", {"literal":")","pos":1654}], "postprocess": d => d[3]},
-    {"name": "mid_bit_expr", "symbols": [{"literal":"(","pos":1660}, "_", "bit_expr", "_", {"literal":")","pos":1668}, "__"], "postprocess": d => d[2]},
+    {"name": "mid_bit_expr", "symbols": [{"literal":"(","pos":1454}, "_", "bit_expr", "_", {"literal":")","pos":1462}], "postprocess": d => d[2]},
+    {"name": "mid_bit_expr", "symbols": ["__", {"literal":"(","pos":1470}, "_", "bit_expr", "_", {"literal":")","pos":1478}], "postprocess": d => d[3]},
+    {"name": "mid_bit_expr", "symbols": [{"literal":"(","pos":1484}, "_", "bit_expr", "_", {"literal":")","pos":1492}, "__"], "postprocess": d => d[2]},
     {"name": "mid_bit_expr", "symbols": ["__", "bit_expr", "__"], "postprocess": d => d[1]},
     {"name": "like_predicate$subexpression$1", "symbols": ["NOT", "__"]},
     {"name": "like_predicate$subexpression$1", "symbols": []},
-    {"name": "like_predicate", "symbols": ["pre_bit_expr", "like_predicate$subexpression$1", "LIKE", "post_bit_expr"], "postprocess":
+    {"name": "like_predicate", "symbols": ["pre_bit_expr", "like_predicate$subexpression$1", "LIKE", "post_bit_expr"], "postprocess": 
         d => ({
           type: 'like',
           not: d[1],
@@ -409,32 +428,33 @@ var grammar = {
           comparison: d[3]
         })
             },
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"|","pos":1714}, "_", "simple_expr"], "postprocess": opExprWs('|')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"&","pos":1728}, "_", "simple_expr"], "postprocess": opExprWs('&')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"|","pos":1538}, "_", "simple_expr"], "postprocess": opExprWs('|')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"&","pos":1552}, "_", "simple_expr"], "postprocess": opExprWs('&')},
     {"name": "bit_expr$string$1", "symbols": [{"literal":"<"}, {"literal":"<"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "bit_expr", "symbols": ["bit_expr", "_", "bit_expr$string$1", "_", "simple_expr"], "postprocess": opExprWs('<<')},
     {"name": "bit_expr$string$2", "symbols": [{"literal":">"}, {"literal":">"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "bit_expr", "symbols": ["bit_expr", "_", "bit_expr$string$2", "_", "simple_expr"], "postprocess": opExprWs('>>')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"+","pos":1770}, "_", "simple_expr"], "postprocess": opExprWs('+')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"-","pos":1784}, "_", "simple_expr"], "postprocess": opExprWs('-')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"*","pos":1798}, "_", "simple_expr"], "postprocess": opExprWs('*')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"/","pos":1812}, "_", "simple_expr"], "postprocess": opExprWs('/')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"+","pos":1594}, "_", "simple_expr"], "postprocess": opExprWs('+')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"-","pos":1608}, "_", "simple_expr"], "postprocess": opExprWs('-')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"*","pos":1622}, "_", "simple_expr"], "postprocess": opExprWs('*')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"/","pos":1636}, "_", "simple_expr"], "postprocess": opExprWs('/')},
     {"name": "bit_expr", "symbols": ["pre_bit_expr", "DIV", "post_simple_expr"], "postprocess": opExpr('DIV')},
     {"name": "bit_expr", "symbols": ["pre_bit_expr", "MOD", "post_simple_expr"], "postprocess": opExpr('MOD')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"%","pos":1846}, "_", "simple_expr"], "postprocess": opExprWs('%')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"^","pos":1860}, "_", "simple_expr"], "postprocess": opExprWs('^')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"+","pos":1874}, "_", "interval_expr"], "postprocess": opExprWs('+')},
-    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"-","pos":1888}, "_", "interval_expr"], "postprocess": opExprWs('-')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"%","pos":1670}, "_", "simple_expr"], "postprocess": opExprWs('%')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"^","pos":1684}, "_", "simple_expr"], "postprocess": opExprWs('^')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"+","pos":1698}, "_", "interval_expr"], "postprocess": opExprWs('+')},
+    {"name": "bit_expr", "symbols": ["bit_expr", "_", {"literal":"-","pos":1712}, "_", "interval_expr"], "postprocess": opExprWs('-')},
     {"name": "bit_expr", "symbols": ["interval_expr"], "postprocess": d => d[0]},
     {"name": "bit_expr", "symbols": ["simple_expr"], "postprocess": d => d[0]},
     {"name": "pre_bit_expr", "symbols": ["bit_expr", "__"], "postprocess": d => d[0]},
-    {"name": "pre_bit_expr", "symbols": [{"literal":"(","pos":1920}, "_", "bit_expr", "_", {"literal":")","pos":1928}], "postprocess": d => d[2]},
+    {"name": "pre_bit_expr", "symbols": [{"literal":"(","pos":1744}, "_", "bit_expr", "_", {"literal":")","pos":1752}], "postprocess": d => d[2]},
     {"name": "post_bit_expr", "symbols": ["__", "bit_expr"], "postprocess": d => d[1]},
-    {"name": "post_bit_expr", "symbols": [{"literal":"(","pos":1944}, "_", "bit_expr", "_", {"literal":")","pos":1952}], "postprocess": d => d[2]},
+    {"name": "post_bit_expr", "symbols": [{"literal":"(","pos":1768}, "_", "bit_expr", "_", {"literal":")","pos":1776}], "postprocess": d => d[2]},
     {"name": "simple_expr", "symbols": ["literal"], "postprocess": d => d[0]},
     {"name": "simple_expr", "symbols": ["identifier"], "postprocess": d => d[0]},
+    {"name": "simple_expr", "symbols": [{"literal":"@","pos":1796}, "identifier"], "postprocess": d => ({type: 'variable', value: d[1].value})},
     {"name": "simple_expr", "symbols": ["function_call"], "postprocess": d => d[0]},
-    {"name": "simple_expr", "symbols": [{"literal":"(","pos":1980}, "_", "expr_comma_list", "_", {"literal":")","pos":1988}], "postprocess": d => d[2]},
+    {"name": "simple_expr", "symbols": [{"literal":"(","pos":1812}, "_", "expr_comma_list", "_", {"literal":")","pos":1820}], "postprocess": d => d[2]},
     {"name": "simple_expr", "symbols": ["subquery"], "postprocess": d => d[0]},
     {"name": "simple_expr", "symbols": ["EXISTS", "_", "subquery"], "postprocess": d => ({type: 'exists', query: d[2]})},
     {"name": "simple_expr", "symbols": ["case_statement"], "postprocess": d => d[0]},
@@ -442,17 +462,17 @@ var grammar = {
     {"name": "simple_expr", "symbols": ["if_statement"], "postprocess": d => d[0]},
     {"name": "simple_expr", "symbols": ["cast_statement"], "postprocess": d => d[0]},
     {"name": "simple_expr", "symbols": ["convert_statement"], "postprocess": d => d[0]},
-    {"name": "simple_expr", "symbols": ["identifier", {"literal":".","pos":2046}, "identifier"], "postprocess": d => ({type: 'column', table: d[0].value, name: d[2].value})},
+    {"name": "simple_expr", "symbols": ["identifier", {"literal":".","pos":1878}, "identifier"], "postprocess": d => ({type: 'column', table: d[0].value, name: d[2].value})},
     {"name": "post_simple_expr", "symbols": ["__", "simple_expr"], "postprocess": d => d[1]},
-    {"name": "post_simple_expr", "symbols": [{"literal":"(","pos":2064}, "_", "simple_expr", "_", {"literal":")","pos":2072}], "postprocess": d => d[2]},
+    {"name": "post_simple_expr", "symbols": [{"literal":"(","pos":1896}, "_", "simple_expr", "_", {"literal":")","pos":1904}], "postprocess": d => d[2]},
     {"name": "literal", "symbols": ["string"], "postprocess": d => d[0]},
     {"name": "literal", "symbols": ["decimal"], "postprocess": d => ({type: 'decimal', value: d[0]})},
     {"name": "literal", "symbols": ["NULLX"], "postprocess": d => ({type: 'null'})},
     {"name": "literal", "symbols": ["TRUE"], "postprocess": d => ({type: 'true'})},
     {"name": "literal", "symbols": ["FALSE"], "postprocess": d => ({type: 'false'})},
     {"name": "expr_comma_list", "symbols": ["expr"], "postprocess": d => ({type:'expr_comma_list', exprs: [d[0]]})},
-    {"name": "expr_comma_list", "symbols": ["expr_comma_list", "_", {"literal":",","pos":2122}, "_", "expr"], "postprocess": d => ({type:'expr_comma_list', exprs: (d[0].exprs||[]).concat(d[4])})},
-    {"name": "if_statement", "symbols": ["IF", "_", {"literal":"(","pos":2138}, "_", "expr", "_", {"literal":",","pos":2146}, "_", "expr", "_", {"literal":",","pos":2154}, "_", "expr", "_", {"literal":")","pos":2162}], "postprocess":
+    {"name": "expr_comma_list", "symbols": ["expr_comma_list", "_", {"literal":",","pos":1954}, "_", "expr"], "postprocess": d => ({type:'expr_comma_list', exprs: (d[0].exprs||[]).concat(d[4])})},
+    {"name": "if_statement", "symbols": ["IF", "_", {"literal":"(","pos":1970}, "_", "expr", "_", {"literal":",","pos":1978}, "_", "expr", "_", {"literal":",","pos":1986}, "_", "expr", "_", {"literal":")","pos":1994}], "postprocess": 
         d => ({
           type: 'if',
           condition: d[4],
@@ -464,7 +484,7 @@ var grammar = {
     {"name": "case_statement$subexpression$1", "symbols": ["mid_expr"]},
     {"name": "case_statement$subexpression$2", "symbols": ["__", "ELSE", "__", "expr", "__"]},
     {"name": "case_statement$subexpression$2", "symbols": ["__"]},
-    {"name": "case_statement", "symbols": ["CASE", "case_statement$subexpression$1", "when_statement_list", "case_statement$subexpression$2", "END"], "postprocess":
+    {"name": "case_statement", "symbols": ["CASE", "case_statement$subexpression$1", "when_statement_list", "case_statement$subexpression$2", "END"], "postprocess": 
         d => ({
           type: 'case',
           match: d[1][0],
@@ -477,29 +497,29 @@ var grammar = {
           statements: (d[0].statements||[]).concat([d[2]])
         })
           },
-    {"name": "when_statement", "symbols": ["WHEN", "__", "expr", "__", "THEN", "__", "expr"], "postprocess":
+    {"name": "when_statement", "symbols": ["WHEN", "__", "expr", "__", "THEN", "__", "expr"], "postprocess": 
         d => ({
           type: 'when',
           condition: d[2],
           then: d[6]
         })
             },
-    {"name": "subquery", "symbols": [{"literal":"(","pos":2244}, "_", "query_spec", "_", {"literal":")","pos":2252}], "postprocess": d => d[2]},
-    {"name": "convert_statement", "symbols": ["CONVERT", "_", {"literal":"(","pos":2264}, "expr", "__", "USING", "__", "identifier", {"literal":")","pos":2276}], "postprocess":
+    {"name": "subquery", "symbols": [{"literal":"(","pos":2076}, "_", "query_spec", "_", {"literal":")","pos":2084}], "postprocess": d => d[2]},
+    {"name": "convert_statement", "symbols": ["CONVERT", "_", {"literal":"(","pos":2096}, "expr", "__", "USING", "__", "identifier", {"literal":")","pos":2108}], "postprocess": 
         d => ({
           type: 'convert',
           value: d[2],
           using: d[4]
         })
             },
-    {"name": "interval_expr", "symbols": ["INTERVAL", "__", "expr", "__", "date_unit"], "postprocess":
+    {"name": "interval_expr", "symbols": ["INTERVAL", "__", "expr", "__", "date_unit"], "postprocess": 
         d => ({
           type: 'interval',
           value: d[2],
           unit: d[4]
         })
             },
-    {"name": "cast_statement", "symbols": ["CAST", "_", {"literal":"(","pos":2304}, "_", "expr", "__", "AS", "__", "data_type", "_", {"literal":")","pos":2320}], "postprocess":
+    {"name": "cast_statement", "symbols": ["CAST", "_", {"literal":"(","pos":2136}, "_", "expr", "__", "AS", "__", "data_type", "_", {"literal":")","pos":2152}], "postprocess": 
         d => ({
           type: 'cast',
           value: d[4],
@@ -507,10 +527,10 @@ var grammar = {
         })
             },
     {"name": "DECIMAL", "symbols": ["D", "E", "C", "I", "M", "A", "L"]},
-    {"name": "data_type$subexpression$1", "symbols": [{"literal":"(","pos":2362}, "int", {"literal":")","pos":2366}]},
+    {"name": "data_type$subexpression$1", "symbols": [{"literal":"(","pos":2194}, "int", {"literal":")","pos":2198}]},
     {"name": "data_type$subexpression$1", "symbols": []},
     {"name": "data_type", "symbols": ["B", "I", "N", "A", "R", "Y", "data_type$subexpression$1"], "postprocess": d => dataType('binary', d[6])},
-    {"name": "data_type$subexpression$2", "symbols": [{"literal":"(","pos":2387}, "int", {"literal":")","pos":2391}]},
+    {"name": "data_type$subexpression$2", "symbols": [{"literal":"(","pos":2219}, "int", {"literal":")","pos":2223}]},
     {"name": "data_type$subexpression$2", "symbols": []},
     {"name": "data_type", "symbols": ["C", "H", "A", "R", "data_type$subexpression$2"], "postprocess": d => dataType('char', d[4])},
     {"name": "data_type", "symbols": ["D", "A", "T", "E"], "postprocess": d => dataType('date')},
@@ -519,14 +539,14 @@ var grammar = {
     {"name": "data_type$subexpression$3", "symbols": []},
     {"name": "data_type$subexpression$4", "symbols": ["__"]},
     {"name": "data_type$subexpression$4", "symbols": []},
-    {"name": "data_type", "symbols": ["DECIMAL", {"literal":"(","pos":2423}, "data_type$subexpression$3", "int", "data_type$subexpression$4", {"literal":")","pos":2439}], "postprocess": d => dataType('decimal', [0,d[3]])},
+    {"name": "data_type", "symbols": ["DECIMAL", {"literal":"(","pos":2255}, "data_type$subexpression$3", "int", "data_type$subexpression$4", {"literal":")","pos":2271}], "postprocess": d => dataType('decimal', [0,d[3]])},
     {"name": "data_type$subexpression$5", "symbols": ["__"]},
     {"name": "data_type$subexpression$5", "symbols": []},
     {"name": "data_type$subexpression$6", "symbols": ["__"]},
     {"name": "data_type$subexpression$6", "symbols": []},
     {"name": "data_type$subexpression$7", "symbols": ["__"]},
     {"name": "data_type$subexpression$7", "symbols": []},
-    {"name": "data_type", "symbols": ["DECIMAL", {"literal":"(","pos":2447}, "data_type$subexpression$5", "int", "data_type$subexpression$6", {"literal":",","pos":2463}, "data_type$subexpression$7", "int", {"literal":")","pos":2473}], "postprocess":  d => ({
+    {"name": "data_type", "symbols": ["DECIMAL", {"literal":"(","pos":2279}, "data_type$subexpression$5", "int", "data_type$subexpression$6", {"literal":",","pos":2295}, "data_type$subexpression$7", "int", {"literal":")","pos":2305}], "postprocess":  d => ({
           type: 'data_type',
           data_type: 'decimal',
           size1: d[3],
@@ -547,29 +567,29 @@ var grammar = {
     {"name": "date_unit_internal", "symbols": ["M", "O", "N", "T", "H"]},
     {"name": "date_unit_internal", "symbols": ["Q", "U", "A", "R", "T", "E", "R"]},
     {"name": "date_unit_internal", "symbols": ["Y", "E", "A", "R"]},
-    {"name": "date_unit_internal", "symbols": ["S", "E", "C", "O", "N", "D", {"literal":"_","pos":2695}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["M", "I", "N", "U", "T", "E", {"literal":"_","pos":2733}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["M", "I", "N", "U", "T", "E", {"literal":"_","pos":2771}, "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2795}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2829}, "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2853}, "M", "I", "N", "U", "T", "E"]},
-    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2875}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2907}, "S", "E", "C", "O", "N", "D"]},
-    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2929}, "M", "I", "N", "U", "T", "E"]},
-    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2951}, "H", "O", "U", "R"]},
-    {"name": "date_unit_internal", "symbols": ["Y", "E", "A", "R", {"literal":"_","pos":2971}, "M", "O", "N", "T", "H"]},
-    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":2991}, "_", {"literal":"*","pos":2995}, "_", {"literal":")","pos":2999}], "postprocess":  d => ({
+    {"name": "date_unit_internal", "symbols": ["S", "E", "C", "O", "N", "D", {"literal":"_","pos":2527}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["M", "I", "N", "U", "T", "E", {"literal":"_","pos":2565}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["M", "I", "N", "U", "T", "E", {"literal":"_","pos":2603}, "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2627}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2661}, "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["H", "O", "U", "R", {"literal":"_","pos":2685}, "M", "I", "N", "U", "T", "E"]},
+    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2707}, "M", "I", "C", "R", "O", "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2739}, "S", "E", "C", "O", "N", "D"]},
+    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2761}, "M", "I", "N", "U", "T", "E"]},
+    {"name": "date_unit_internal", "symbols": ["D", "A", "Y", {"literal":"_","pos":2783}, "H", "O", "U", "R"]},
+    {"name": "date_unit_internal", "symbols": ["Y", "E", "A", "R", {"literal":"_","pos":2803}, "M", "O", "N", "T", "H"]},
+    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":2823}, "_", {"literal":"*","pos":2827}, "_", {"literal":")","pos":2831}], "postprocess":  d => ({
           type:'function_call',
           name: d[0],
           select_all: true
         }) },
-    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":3009}, "_", "DISTINCT", "__", "column", "_", {"literal":")","pos":3021}], "postprocess":  d => ({
+    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":2841}, "_", "DISTINCT", "__", "column", "_", {"literal":")","pos":2853}], "postprocess":  d => ({
           type: 'function_call',
           name: d[0],
           distinct: true,
           parameters: [d[6]]
         })},
-    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":3031}, "_", "ALL", "post_expr", "_", {"literal":")","pos":3041}], "postprocess":  d => ({
+    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":2863}, "_", "ALL", "post_expr", "_", {"literal":")","pos":2873}], "postprocess":  d => ({
           type: 'function_call',
           name: d[0],
           all: true,
@@ -581,7 +601,7 @@ var grammar = {
           name: d[0],
           parameters: []
         })},
-    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":3061}, "_", "expr_comma_list", "_", {"literal":")","pos":3069}], "postprocess":  d => ({
+    {"name": "function_call", "symbols": ["function_identifier", "_", {"literal":"(","pos":2893}, "_", "expr_comma_list", "_", {"literal":")","pos":2901}], "postprocess":  d => ({
           type: 'function_call',
           name: d[0],
           parameters: (d[4].exprs)
@@ -599,7 +619,7 @@ var grammar = {
     {"name": "identifier$ebnf$1$subexpression$2$string$1", "symbols": [{"literal":"\\"}, {"literal":"]"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "identifier$ebnf$1$subexpression$2", "symbols": ["identifier$ebnf$1$subexpression$2$string$1"]},
     {"name": "identifier$ebnf$1", "symbols": ["identifier$ebnf$1$subexpression$2", "identifier$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "identifier", "symbols": [{"literal":"[","pos":3119}, "identifier$ebnf$1", {"literal":"]","pos":3130}], "postprocess": d => ({type: 'identifier', value: d[1].map(x => x[0]).join('')})},
+    {"name": "identifier", "symbols": [{"literal":"[","pos":2951}, "identifier$ebnf$1", {"literal":"]","pos":2962}], "postprocess": d => ({type: 'identifier', value: d[1].map(x => x[0]).join('')})},
     {"name": "identifier$ebnf$2", "symbols": []},
     {"name": "identifier$ebnf$2", "symbols": [/[a-zA-Z0-9_]/, "identifier$ebnf$2"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "identifier", "symbols": [/[a-zA-Z_]/, "identifier$ebnf$2"], "postprocess":  (d,l,reject) => {
@@ -617,28 +637,28 @@ var grammar = {
         } },
     {"name": "dqstring$ebnf$1", "symbols": []},
     {"name": "dqstring$ebnf$1", "symbols": ["dstrchar", "dqstring$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "dqstring", "symbols": [{"literal":"\"","pos":3166}, "dqstring$ebnf$1", {"literal":"\"","pos":3171}], "postprocess": function(d) {return d[1].join(""); }},
+    {"name": "dqstring", "symbols": [{"literal":"\"","pos":2998}, "dqstring$ebnf$1", {"literal":"\"","pos":3003}], "postprocess": function(d) {return d[1].join(""); }},
     {"name": "sqstring$ebnf$1", "symbols": []},
     {"name": "sqstring$ebnf$1", "symbols": ["sstrchar", "sqstring$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "sqstring", "symbols": [{"literal":"'","pos":3179}, "sqstring$ebnf$1", {"literal":"'","pos":3184}], "postprocess": function(d) {return d[1].join(""); }},
+    {"name": "sqstring", "symbols": [{"literal":"'","pos":3011}, "sqstring$ebnf$1", {"literal":"'","pos":3016}], "postprocess": function(d) {return d[1].join(""); }},
     {"name": "btstring$ebnf$1", "symbols": []},
     {"name": "btstring$ebnf$1", "symbols": [/[^`]/, "btstring$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "btstring", "symbols": [{"literal":"`","pos":3192}, "btstring$ebnf$1", {"literal":"`","pos":3197}], "postprocess": function(d) {return d[1].join(""); }},
+    {"name": "btstring", "symbols": [{"literal":"`","pos":3024}, "btstring$ebnf$1", {"literal":"`","pos":3029}], "postprocess": function(d) {return d[1].join(""); }},
     {"name": "dstrchar", "symbols": [/[^\\"\n]/], "postprocess": id},
-    {"name": "dstrchar", "symbols": [{"literal":"\\","pos":3211}, "strescape"], "postprocess":
+    {"name": "dstrchar", "symbols": [{"literal":"\\","pos":3043}, "strescape"], "postprocess": 
         function(d) {
           return JSON.parse("\""+d.join("")+"\"");
         }
         },
     {"name": "sstrchar", "symbols": [/[^\\'\n]/], "postprocess": id},
-    {"name": "sstrchar", "symbols": [{"literal":"\\","pos":3227}, "strescape"], "postprocess":
+    {"name": "sstrchar", "symbols": [{"literal":"\\","pos":3059}, "strescape"], "postprocess": 
         function(d) {
           return JSON.parse("\""+d.join("")+"\"");
         } },
     {"name": "sstrchar$string$1", "symbols": [{"literal":"\\"}, {"literal":"'"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "sstrchar", "symbols": ["sstrchar$string$1"], "postprocess": function(d) {return "'"; }},
     {"name": "strescape", "symbols": [/["\\/bfnrt]/], "postprocess": id},
-    {"name": "strescape", "symbols": [{"literal":"u","pos":3249}, /[a-fA-F0-9]/, /[a-fA-F0-9]/, /[a-fA-F0-9]/, /[a-fA-F0-9]/], "postprocess":
+    {"name": "strescape", "symbols": [{"literal":"u","pos":3081}, /[a-fA-F0-9]/, /[a-fA-F0-9]/, /[a-fA-F0-9]/, /[a-fA-F0-9]/], "postprocess": 
         function(d) {
             return d.join("");
         }
@@ -697,58 +717,58 @@ var grammar = {
     {"name": "WHEN", "symbols": [/[Ww]/, /[Hh]/, /[Ee]/, /[Nn]/]},
     {"name": "WHERE", "symbols": [/[Ww]/, /[Hh]/, /[Ee]/, /[Rr]/, /[Ee]/]},
     {"name": "XOR", "symbols": [/[Xx]/, /[Oo]/, /[Rr]/]},
-    {"name": "A", "symbols": [{"literal":"A","pos":3951}]},
-    {"name": "A", "symbols": [{"literal":"a","pos":3955}]},
-    {"name": "B", "symbols": [{"literal":"B","pos":3961}]},
-    {"name": "B", "symbols": [{"literal":"b","pos":3965}]},
-    {"name": "C", "symbols": [{"literal":"C","pos":3971}]},
-    {"name": "C", "symbols": [{"literal":"c","pos":3975}]},
-    {"name": "D", "symbols": [{"literal":"D","pos":3981}]},
-    {"name": "D", "symbols": [{"literal":"d","pos":3985}]},
-    {"name": "E", "symbols": [{"literal":"E","pos":3991}]},
-    {"name": "E", "symbols": [{"literal":"e","pos":3995}]},
-    {"name": "F", "symbols": [{"literal":"F","pos":4001}]},
-    {"name": "F", "symbols": [{"literal":"f","pos":4005}]},
-    {"name": "G", "symbols": [{"literal":"G","pos":4011}]},
-    {"name": "G", "symbols": [{"literal":"g","pos":4015}]},
-    {"name": "H", "symbols": [{"literal":"H","pos":4021}]},
-    {"name": "H", "symbols": [{"literal":"h","pos":4025}]},
-    {"name": "I", "symbols": [{"literal":"I","pos":4031}]},
-    {"name": "I", "symbols": [{"literal":"i","pos":4035}]},
-    {"name": "J", "symbols": [{"literal":"J","pos":4041}]},
-    {"name": "J", "symbols": [{"literal":"j","pos":4045}]},
-    {"name": "K", "symbols": [{"literal":"K","pos":4051}]},
-    {"name": "K", "symbols": [{"literal":"k","pos":4055}]},
-    {"name": "L", "symbols": [{"literal":"L","pos":4061}]},
-    {"name": "L", "symbols": [{"literal":"l","pos":4065}]},
-    {"name": "M", "symbols": [{"literal":"M","pos":4071}]},
-    {"name": "M", "symbols": [{"literal":"m","pos":4075}]},
-    {"name": "N", "symbols": [{"literal":"N","pos":4081}]},
-    {"name": "N", "symbols": [{"literal":"n","pos":4085}]},
-    {"name": "O", "symbols": [{"literal":"O","pos":4091}]},
-    {"name": "O", "symbols": [{"literal":"o","pos":4095}]},
-    {"name": "P", "symbols": [{"literal":"P","pos":4101}]},
-    {"name": "P", "symbols": [{"literal":"p","pos":4105}]},
-    {"name": "Q", "symbols": [{"literal":"Q","pos":4111}]},
-    {"name": "Q", "symbols": [{"literal":"q","pos":4115}]},
-    {"name": "R", "symbols": [{"literal":"R","pos":4121}]},
-    {"name": "R", "symbols": [{"literal":"r","pos":4125}]},
-    {"name": "S", "symbols": [{"literal":"S","pos":4131}]},
-    {"name": "S", "symbols": [{"literal":"s","pos":4135}]},
-    {"name": "T", "symbols": [{"literal":"T","pos":4141}]},
-    {"name": "T", "symbols": [{"literal":"t","pos":4145}]},
-    {"name": "U", "symbols": [{"literal":"U","pos":4151}]},
-    {"name": "U", "symbols": [{"literal":"u","pos":4155}]},
-    {"name": "V", "symbols": [{"literal":"V","pos":4161}]},
-    {"name": "V", "symbols": [{"literal":"v","pos":4165}]},
-    {"name": "W", "symbols": [{"literal":"W","pos":4171}]},
-    {"name": "W", "symbols": [{"literal":"w","pos":4175}]},
-    {"name": "X", "symbols": [{"literal":"X","pos":4181}]},
-    {"name": "X", "symbols": [{"literal":"x","pos":4185}]},
-    {"name": "Y", "symbols": [{"literal":"Y","pos":4191}]},
-    {"name": "Y", "symbols": [{"literal":"y","pos":4195}]},
-    {"name": "Z", "symbols": [{"literal":"Z","pos":4201}]},
-    {"name": "Z", "symbols": [{"literal":"z","pos":4205}]},
+    {"name": "A", "symbols": [{"literal":"A","pos":3783}]},
+    {"name": "A", "symbols": [{"literal":"a","pos":3787}]},
+    {"name": "B", "symbols": [{"literal":"B","pos":3793}]},
+    {"name": "B", "symbols": [{"literal":"b","pos":3797}]},
+    {"name": "C", "symbols": [{"literal":"C","pos":3803}]},
+    {"name": "C", "symbols": [{"literal":"c","pos":3807}]},
+    {"name": "D", "symbols": [{"literal":"D","pos":3813}]},
+    {"name": "D", "symbols": [{"literal":"d","pos":3817}]},
+    {"name": "E", "symbols": [{"literal":"E","pos":3823}]},
+    {"name": "E", "symbols": [{"literal":"e","pos":3827}]},
+    {"name": "F", "symbols": [{"literal":"F","pos":3833}]},
+    {"name": "F", "symbols": [{"literal":"f","pos":3837}]},
+    {"name": "G", "symbols": [{"literal":"G","pos":3843}]},
+    {"name": "G", "symbols": [{"literal":"g","pos":3847}]},
+    {"name": "H", "symbols": [{"literal":"H","pos":3853}]},
+    {"name": "H", "symbols": [{"literal":"h","pos":3857}]},
+    {"name": "I", "symbols": [{"literal":"I","pos":3863}]},
+    {"name": "I", "symbols": [{"literal":"i","pos":3867}]},
+    {"name": "J", "symbols": [{"literal":"J","pos":3873}]},
+    {"name": "J", "symbols": [{"literal":"j","pos":3877}]},
+    {"name": "K", "symbols": [{"literal":"K","pos":3883}]},
+    {"name": "K", "symbols": [{"literal":"k","pos":3887}]},
+    {"name": "L", "symbols": [{"literal":"L","pos":3893}]},
+    {"name": "L", "symbols": [{"literal":"l","pos":3897}]},
+    {"name": "M", "symbols": [{"literal":"M","pos":3903}]},
+    {"name": "M", "symbols": [{"literal":"m","pos":3907}]},
+    {"name": "N", "symbols": [{"literal":"N","pos":3913}]},
+    {"name": "N", "symbols": [{"literal":"n","pos":3917}]},
+    {"name": "O", "symbols": [{"literal":"O","pos":3923}]},
+    {"name": "O", "symbols": [{"literal":"o","pos":3927}]},
+    {"name": "P", "symbols": [{"literal":"P","pos":3933}]},
+    {"name": "P", "symbols": [{"literal":"p","pos":3937}]},
+    {"name": "Q", "symbols": [{"literal":"Q","pos":3943}]},
+    {"name": "Q", "symbols": [{"literal":"q","pos":3947}]},
+    {"name": "R", "symbols": [{"literal":"R","pos":3953}]},
+    {"name": "R", "symbols": [{"literal":"r","pos":3957}]},
+    {"name": "S", "symbols": [{"literal":"S","pos":3963}]},
+    {"name": "S", "symbols": [{"literal":"s","pos":3967}]},
+    {"name": "T", "symbols": [{"literal":"T","pos":3973}]},
+    {"name": "T", "symbols": [{"literal":"t","pos":3977}]},
+    {"name": "U", "symbols": [{"literal":"U","pos":3983}]},
+    {"name": "U", "symbols": [{"literal":"u","pos":3987}]},
+    {"name": "V", "symbols": [{"literal":"V","pos":3993}]},
+    {"name": "V", "symbols": [{"literal":"v","pos":3997}]},
+    {"name": "W", "symbols": [{"literal":"W","pos":4003}]},
+    {"name": "W", "symbols": [{"literal":"w","pos":4007}]},
+    {"name": "X", "symbols": [{"literal":"X","pos":4013}]},
+    {"name": "X", "symbols": [{"literal":"x","pos":4017}]},
+    {"name": "Y", "symbols": [{"literal":"Y","pos":4023}]},
+    {"name": "Y", "symbols": [{"literal":"y","pos":4027}]},
+    {"name": "Z", "symbols": [{"literal":"Z","pos":4033}]},
+    {"name": "Z", "symbols": [{"literal":"z","pos":4037}]},
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["wschar", "_$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": function(d) {return null;}},
@@ -765,7 +785,7 @@ var grammar = {
     {"name": "__$ebnf$3", "symbols": []},
     {"name": "__$ebnf$3", "symbols": ["wschar", "__$ebnf$3"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
     {"name": "__", "symbols": ["__$ebnf$2", "comment", "__$ebnf$3"], "postprocess": function(d) {return null;}},
-    {"name": "comment$subexpression$1", "symbols": [{"literal":"#","pos":4258}]},
+    {"name": "comment$subexpression$1", "symbols": [{"literal":"#","pos":4090}]},
     {"name": "comment$subexpression$1$string$1", "symbols": [{"literal":"-"}, {"literal":"-"}], "postprocess": function joiner(d) {return d.join('');}},
     {"name": "comment$subexpression$1", "symbols": ["comment$subexpression$1$string$1", "wschar"]},
     {"name": "comment$ebnf$1", "symbols": [/[^\n]/]},
