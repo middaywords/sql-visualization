@@ -1,7 +1,6 @@
 /* global declaration */
 body {
   font-family: Menlo, Monacco, monospace;
-  height: 100%;
 }
 
 .text-center {
@@ -54,14 +53,30 @@ select {
 }
 
 dialog {
-  transition: transform .3s ease-out;
+  animation: hide .5s ease normal;
   border: 1px solid rgba(0,0,0,.2);
   border-radius: .3rem;
   padding: 0;
 }
 
+@keyframes hide{
+  to {
+    transform: translateY(-110%);
+  }
+}
+
 dialog[open] {
   display: block;
+  animation: show .5s ease normal;
+}
+
+@keyframes show{
+  from {
+    transform: translateY(-110%);
+  }
+  to {
+    transform: translateY(0%);
+  }
 }
 
 .dialog-container[aria-hidden='true'] {
@@ -119,11 +134,20 @@ header {
 }
 
 #left-panel {
+  height: 100%;
   margin-right: -2.5px;
+  display: flex;
+  flex-flow: column;
 }
 
 #right-panel {
+  height: 100%;
   margin-left: -2.5px;
+}
+
+#right-panel > div {
+  overflow-x: auto;
+  overflow-y: auto;
 }
 
 .gutter {
@@ -144,6 +168,7 @@ header {
 }
 
 #editor-bar {
+  flex: 0 1 auto;
   background-color: #f8f9fa;
   border: 1px solid #d2d3d4;
   display: flex;
@@ -174,11 +199,8 @@ header {
 
 #editor {
   width: 100%;
-}
-
-#diagram-container, #parse-result {
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 #diagram-container {

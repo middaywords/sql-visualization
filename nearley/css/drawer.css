@@ -1,0 +1,62 @@
+.item {
+  position: absolute;
+  height: 80px;
+  width: 80px;
+  border: 1px solid blue;
+}
+
+.canvas-container {
+  text-align: center;
+  margin: 0 auto;
+  height: 800px;
+  width: 50%;
+}
+
+#select-column-container {
+  float: left;
+}
+
+#output-container {
+  float: right;
+}
+
+.scroll-box {
+  height: 300px;
+  width: 40%;
+  font: 16px/26px Georgia, Garamond, Serif;
+  text-align: left;
+  margin: 10px auto;
+  /*    position: absolute;*/
+  /*    background-color: white;*/
+  /*    overflow: auto;*/
+}
+
+.scroll-box-title {
+  text-align: center;
+  font-weight: bold;
+  border-bottom: 2px solid black;
+  /*    position: relative;*/
+}
+
+#input-structure-title {
+  background-color: #E1455A;
+}
+
+#output-structure-title {
+  background-color: #D8DD38;
+}
+
+
+/*set leaf node css*/
+
+.node {
+  display: block;
+  top: auto;
+  /*    margin-left: 0;*/
+}
+
+.leaf {
+  width: 80%;
+  /*    margin-left: 20px;*/
+  border: 1px dotted red;
+}

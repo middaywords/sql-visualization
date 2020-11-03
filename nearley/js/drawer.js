@@ -1,26 +1,13 @@
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.draw = factory()
+  }
+}(this, function () {
 'use strict'
 
-jsPlumb.ready(function () {
-  jsPlumb.setContainer(document.getElementById('diagram-container'))
-})
-
-
-function draw () {
-  jsPlumb.connect({
-    source: 'item-left',
-    target: 'item-right',
-    endpoint: 'Dot'
-  })
-  jsPlumb.draggable('item_left')
-  jsPlumb.draggable('item_right')
-}
-
-
-function simplifyParseResult (result) {
-
-}
-
-
-jsPlumb.ready(function () {
-  draw()
-})
+return
+}))

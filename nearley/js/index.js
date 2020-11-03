@@ -24,7 +24,7 @@ function getTabName (navbar, tab) {
 
 function switchTab (navbar, newTab, editor) {
   setStorage(getTabName(navbar), editor.getValue())
-  updateEditor(editor, getStorage(getTabName(navbar, newTab)))
+  editor.setValue(getStorage(getTabName(navbar, newTab)))
 }
 
 
@@ -44,7 +44,7 @@ document.getElementById('btn-about').addEventListener('click', function (event) 
 
 
 /* parser */
-const splitterParser = Split(['#diagram-container', '#parse-result'], {
+const splitterParser = Split(['#diagram-container', '#inspector'], {
   gutterSize: 5,
   direction: 'vertical',
   elementStyle: (dimension, size, gutterSize) => ({
@@ -56,24 +56,78 @@ const splitterParser = Split(['#diagram-container', '#parse-result'], {
   }),
 })
 const btnShowParseError = document.getElementById('btn-show-parse-error')
+const divParseResult = document.getElementById('inspector')
 function parseText (action, editor) {
   btnShowParseError.classList.remove('warning')
   const text = editor.getValue()
   if (!text) {
+    ReactDOM.unmountComponentAtNode(divParseResult)
+    divParseResult.innerHTML = ''
     return
   }
-  setStorage(getTabName(), text)
+
+  // try parse
   let result
   try {
-    result = parseSql(text)
+    result = AST.parse(text)
   } catch (e) {
     //console.log(e)
     btnShowParseError.classList.add('warning')
     return
   }
-  ReactDOM.render(React.createElement(ReactInspector.ObjectInspector, {
-    data: result
-  }), document.getElementById('parse-result'))
+  if (!result) {
+    return
+  }
+  setStorage(getTabName(), text)
+  // take the first statement
+  result = result[0]
+
+  // create graph
+  const graph = result.analyse().postfix()
+
+  function addIndent (a, indent) {
+    return Array.isArray(a) ?
+      a.map(i => addIndent(i, indent + '  ')).join('\n' + indent) : a
+  }
+  const describe = graph.graph.describe()
+
+  // dump
+  const babel = `
+  ReactDOM.render(
+    <div>
+      <p id="inspector-ast">
+        AST: <ReactInspector.ObjectInspector data={result} />
+      </p>
+      <p id="inspector-resemble">
+        Resemble: <ReactInspector.ObjectInspector data={result.toString()} />
+      </p>
+      <p id="inspector-graph">
+        Graph: <ReactInspector.ObjectInspector data={graph} />
+      </p>
+      <p id="inspector-describe">
+        Describe: <ReactInspector.ObjectInspector data={describe} />
+        <pre>{addIndent(describe, '  ')}</pre>
+      </p>
+    </div>,
+    divParseResult)
+`
+ReactDOM.render( /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  id: "inspector-ast"
+}, "AST: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+  data: result
+})), /*#__PURE__*/React.createElement("p", {
+  id: "inspector-resemble"
+}, "Resemble: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+  data: result.toString()
+})), /*#__PURE__*/React.createElement("p", {
+  id: "inspector-graph"
+}, "Graph: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+  data: graph
+})), /*#__PURE__*/React.createElement("p", {
+  id: "inspector-describe"
+}, "Describe: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+  data: describe
+}), /*#__PURE__*/React.createElement("pre", null, addIndent(describe, '  ')))), divParseResult);
 }
 
 
@@ -81,24 +135,21 @@ function parseText (action, editor) {
 noOverflow(document.getElementById('editor-bar'))
 
 const editor = ace.edit('editor')
-editor.session.setMode('ace/mode/sql')
-
-function updateEditor (editor, code, tag) {
-  editor.setValue(code, true)
-  if (tag) {
-    setStorage(tag, code)
+for (let script of document.getElementsByTagName('script')) {
+  if (script.src.endsWith('ace.min.js')) {
+    ace.config.set('basePath', script.src.slice(null, -'ace.min.js'.length))
+    break
   }
-  parseText(undefined, editor)
 }
+editor.session.setMode('ace/mode/sql')
 editor.on('change', parseText)
 
 function adjustEditorHeight () {
-  document.getElementById('editor').style.height =
-    window.innerHeight -
-    document.getElementsByTagName('header')[0].offsetHeight -
-    document.getElementById('editor-bar').offsetHeight -
-    (window.innerWidth > SMALL_SCREEN_WIDTH ? 0 :
-      document.getElementById('right-panel').offsetHeight) + 'px'
+  if (window.innerWidth > SMALL_SCREEN_WIDTH) {
+    document.getElementById('main').style.height =
+      window.innerHeight -
+      document.getElementsByTagName('header')[0].offsetHeight + 'px'
+  }
 }
 window.addEventListener('resize', adjustEditorHeight)
 adjustEditorHeight()
@@ -117,11 +168,21 @@ if (oldFontsize) {
   editor.setFontSize(+oldFontsize)
 }
 
+document.getElementById('btn-clear').addEventListener('click', function (event) {
+  editor.setValue('')
+})
+document.getElementById('btn-redo').addEventListener('click', function (event) {
+  editor.redo()
+})
+document.getElementById('btn-undo').addEventListener('click', function (event) {
+  editor.undo()
+})
+
 
 /* code save and load */
 const savedCode = getStorage(getTabName())
 if (savedCode) {
-  updateEditor(editor, savedCode)
+  editor.setValue(savedCode)
   const oldCursorPosition = localStorage.getItem('editor-cursor')
   if (oldCursorPosition) {
     editor.moveCursorToPosition(JSON.parse(oldCursorPosition))
@@ -146,7 +207,7 @@ async function loadFile () {
   }
   const content = await file.text()
   if (inputFile) {
-    updateEditor(editor, content, getTabName())
+    editor.setValue(content)
   }
   dialogSaveload.hide()
 }
@@ -168,7 +229,7 @@ function loadExample () {
   }
   const xhr = new XMLHttpRequest()
   xhr.addEventListener('load', function () {
-    updateEditor(editor, this.responseText, getTabName())
+    editor.setValue(this.responseText)
   })
   xhr.open('GET', 'examples/' + exampleName + '.sql')
   xhr.send()
@@ -183,5 +244,5 @@ function p () {
   if (!text) {
     return
   }
-  return parseSql(text)
+  return AST.parse(text)
 }
