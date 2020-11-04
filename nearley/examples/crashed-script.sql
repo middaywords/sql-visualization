@@ -1,8 +1,8 @@
 SELECT
     mspa.prod_num AS prod_num,
     mspa_qty AS mspa_qty,
-    isnull(px_move, 0.0) AS px_move,
-    mspa.mspa_qty - isnull(px.px_move, 0.0) AS diff
+    isnull(px_mdve, 0.0) AS px_move,
+    mspa.mspa_qcy - isnull(px.px_move, 0.0) AS diff
 FROM
 (
 SELECT 
