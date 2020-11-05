@@ -28,15 +28,6 @@ function switchTab (navbar, newTab, editor) {
 }
 
 
-const splitterMain = Split(['#left-panel', '#right-panel'], {
-  elementStyle: (dimension, size, gutterSize) => ({
-    'flex-basis': `calc(${size}% - ${gutterSize}px)`,
-    'width': `calc(${size}% + .5 * ${gutterSize}px)`,
-  }),
-  gutterStyle: (dimension, gutterSize) => ({
-    'flex-basis':  `${gutterSize}px`,
-  }),
-})
 const dialogAbout = new A11yDialog(document.getElementById('dialog-about'))
 document.getElementById('btn-about').addEventListener('click', function (event) {
   dialogAbout.show()
@@ -144,12 +135,24 @@ for (let script of document.getElementsByTagName('script')) {
 editor.session.setMode('ace/mode/sql')
 editor.on('change', parseText)
 
+const splitterMain = Split(['#left-panel', '#right-panel'], {
+  elementStyle: (dimension, size, gutterSize) => ({
+    'flex-basis': `calc(${size}% - ${gutterSize}px)`,
+    'width': `calc(${size}% + .5 * ${gutterSize}px)`,
+  }),
+  gutterStyle: (dimension, gutterSize) => ({
+    'flex-basis':  `${gutterSize}px`,
+  }),
+  onDrag: () => editor.resize()
+})
+
 function adjustEditorHeight () {
   if (window.innerWidth > SMALL_SCREEN_WIDTH) {
     document.getElementById('main').style.height =
       window.innerHeight -
       document.getElementsByTagName('header')[0].offsetHeight + 'px'
   }
+  editor.resize()
 }
 window.addEventListener('resize', adjustEditorHeight)
 adjustEditorHeight()

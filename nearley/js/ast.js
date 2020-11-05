@@ -19,9 +19,7 @@ class Node {
   }
 
   toString () {
-    try{
     return this.tokens.join(' ')
-  } catch(e){debugger}
   }
 
   analyse () {

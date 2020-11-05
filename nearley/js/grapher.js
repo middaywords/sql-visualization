@@ -123,7 +123,13 @@ class Node {
     ].join(',\t')
   }
 
-  analyse () {
+  analyse (stack) {
+    if (stack) {
+      stack.push(this)
+    } else {
+      stack = [this]
+    }
+
     const result = {
       graph: this,
       tables: new Set,
@@ -132,14 +138,17 @@ class Node {
       views: new Set,
     }
     result[this.constructor.type + 's'].add(this)
+
     const children = this.getChildren()
     if (children) {
       for (let child of children) {
-        const subresult = child.analyse()
-        setConcat(result.tables, subresult.tables)
-        setConcat(result.columns, subresult.columns)
-        setConcat(result.expressions, subresult.expressions)
-        setConcat(result.views, subresult.views)
+        if (!stack.includes(child)) {
+          const subresult = child.analyse(stack)
+          setConcat(result.tables, subresult.tables)
+          setConcat(result.columns, subresult.columns)
+          setConcat(result.expressions, subresult.expressions)
+          setConcat(result.views, subresult.views)
+        }
       }
     }
     return result
@@ -208,10 +217,10 @@ class Expression extends Node {
     this.variables = variables
   }
 
-  describe (column) {
+  describe () {
     return [
       `${this.name} from "${this.text}", which depends on:`,
-      ...Array.from(this.variables).map(variable => variable.describe(variable))
+      ...Array.from(this.variables).map(variable => variable.describe())
     ]
   }
 
@@ -252,10 +261,10 @@ class View extends Node {
     this._postAnalysing = false
   }
 
-  describe (column) {
+  describe () {
     return [
       `Select ${this.columns.length} columns:`,
-      ...this.columns.map(column => column.describe(column))
+      ...this.columns.map(column => column.describe())
     ]
   }
 
@@ -340,16 +349,24 @@ class Column extends Node {
     this.froms = view.dig(name, tableName)
     this.dangling = !this.froms || this.froms.size === 0
     if (this.dangling) {
-      console.warn('Column', (tableName ? tableName + '.' : '') + name, 'has no source')
+      console.warn(
+        'Column',
+        (typeof tableName === 'string' ? tableName + '.' : '') + name,
+        'has no source'
+      )
       this.froms = new Set([view.get(tableName)])
     }
   }
 
   describe () {
     const tableNames = this.describeTableNames()
-    return [
+    return !this.dangling ? [
       this.name + (tableNames ? '@' + tableNames : '') + ', which is from:',
       ...this.getSortedFrom().map(from => from.describe(this))
+    ] : [
+      this.name + (tableNames ? '@' + tableNames : '') + ', which should be from:',
+      this.getSortedFrom().map(from => from.name + ','),
+      'but I have not found them!'
     ]
   }
 
