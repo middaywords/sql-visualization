@@ -12,10 +12,6 @@
         href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
         integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
         crossorigin="anonymous" />
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/jsPlumb/2.15.0/css/jsplumbtoolkit-defaults.min.css"
-        integrity="sha512-4buFEvwrnbqow5DmgXVCJIHskJMxbAemoim0xwT6XonnRAVB3zK6cmYO4eX6dMa0PnuTXK+UyfW+6RizMfBypg=="
-        crossorigin="anonymous" />
     <link rel="stylesheet" href="css/github-corner.css" />
     <link rel="stylesheet" href="css/drawer.css" />
     <link rel="stylesheet" href="css/nooverflow.css" />
@@ -89,7 +85,7 @@
         <div id="editor-bar">
           <select name="fontsize" id="select-fontsize" aria-label="Change font size" alt="Change font size">
             <option value="" selected="selected">A</option>
-            <option value="8">8</option>
+            <option value=8>8</option>
             <option value=9>9</option>
             <option value=10>10</option>
             <option value=11>11</option>
@@ -129,7 +125,11 @@
             <span>↩️</span>
             <span class="hideable">Undo</span>
           </button>
-          <button class="flex-float-right-first" id="btn-show-parse-error">❌</button>
+          <button class="flex-float-right-first" id="btn-show-parse-problem">
+            <span id="span-parse-continue">…</span>
+            <span id="span-parse-error">❌</span>
+            <span id="span-parse-warning">‼️</span>
+          </button>
           <button class="flex-float-right" title="Show info about this program" aria-label="Show info about this program" id="btn-about">
             <span>⚙️</span>
             <span class="hideable">Settings/About</span>

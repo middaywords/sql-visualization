@@ -46,9 +46,17 @@ class DefaultMap extends Map {
 
 class Node {
   constructor (ast, name) {
-    this.ast = ast
+    this.asts = [ast]
     this.name = name
     this.parents = new Set
+  }
+
+  get ast () {
+    return this.asts[0]
+  }
+
+  set ast (ast) {
+    this.asts[0] = ast
   }
 
   dig () {
@@ -63,7 +71,7 @@ class Node {
       const children = this.getChildren()
       if (children) {
         for (let child of children) {
-          child.trackParent(child)
+          child.trackParent()
           child.parents.add(this)
         }
       }
@@ -92,6 +100,7 @@ class Node {
           parent.replace(column, identicalColumn)
           identicalColumn.parents.add(parent)
         }
+        identicalColumn.asts = identicalColumn.asts.concat(column.asts)
         continue
       } else {
         uniqueColumns.get(column.name).push(column)
@@ -109,7 +118,10 @@ class Node {
     if (reduced) {
       const oldGraphInfo = graphInfo
       graphInfo = this.analyse()
-      console.debug('Reducer: Before:', Node.formatAnalyse(oldGraphInfo), '\n          After:', Node.formatAnalyse(graphInfo))
+      console.debug(
+        'Reducer: Before:', Node.formatAnalyse(oldGraphInfo),
+        '\n          After:', Node.formatAnalyse(graphInfo)
+      )
     }
     return graphInfo
   }
@@ -124,11 +136,7 @@ class Node {
   }
 
   analyse (stack) {
-    if (stack) {
-      stack.push(this)
-    } else {
-      stack = [this]
-    }
+    stack = [this].concat(stack)
 
     const result = {
       graph: this,
@@ -218,9 +226,11 @@ class Expression extends Node {
   }
 
   describe () {
-    return [
+    return this.variables ? [
       `${this.name} from "${this.text}", which depends on:`,
       ...Array.from(this.variables).map(variable => variable.describe())
+    ] : [
+      `${this.name} from "${this.text}";`
     ]
   }
 
@@ -339,6 +349,7 @@ class View extends Node {
 
 class Column extends Node {
   static anonymous = {
+    type: 'anonymous',
     toString: x => 'anonymous',
     render: x => '<i>anonymous</i>',
   }
@@ -349,7 +360,7 @@ class Column extends Node {
     this.froms = view.dig(name, tableName)
     this.dangling = !this.froms || this.froms.size === 0
     if (this.dangling) {
-      console.warn(
+      console.debug(
         'Column',
         (typeof tableName === 'string' ? tableName + '.' : '') + name,
         'has no source'
@@ -366,7 +377,7 @@ class Column extends Node {
     ] : [
       this.name + (tableNames ? '@' + tableNames : '') + ', which should be from:',
       this.getSortedFrom().map(from => from.name + ','),
-      'but I have not found them!'
+      'but I can not find it!'
     ]
   }
 

@@ -1,23 +1,12 @@
 #@builtin "postprocessors.ne"
 
 delimited[el, delim] -> $el ($delim $el):* {% d => drill(d) %}
-parenthesized[expr] -> $expr {% car %} | "(" $expr ")" {% cdar %}
 
 @lexer sqlLexer
 
 # https://github.com/AlecStrong/sqlite-bnf/blob/master/sqlite.bnf
 
 @{%
-function makeList (list, item) {
-  if (!item) {
-    return list;
-  }
-  if (!list) {
-    return [item];
-  }
-  return list.concat([item])
-}
-
 function car (d) {
   return d[0]
 }
@@ -32,6 +21,12 @@ function cdar (d) {
 
 function cddar (d) {
   return d[2]
+}
+
+function parenthesized (d) {
+  d[1].tokens.push(d[2])
+  d[1].tokens.unshift(d[0])
+  return d[1]
 }
 
 function drill (l) {
@@ -85,7 +80,7 @@ post_selection_column ->
   | identifier "." "*" {% d => new AST.Column(d, d[0], new AST.Keyword(d[2], d[2].value)) %}
 
 from_clause -> "FROM" table_ref_commalist where_clause:? group_by_clause:? having_clause:? order_clause:? limit_clause:? {%
-  d => new AST.From(d, undrill(d[1]), d[2] && d[2][1], d[3] && d[3][1], d[4] && d[4][1], d[5] && undrill(d[5][1]), d[6] && d[6][1])
+  d => new AST.From(d, undrill(d[1]), d[2] && d[2][1], d[3], d[4] && d[4][1], d[5] && undrill(d[5][1]), d[6] && d[6][1])
 %}
 
 table_ref_commalist -> delimited[table_ref, ","] {% car %}
@@ -112,8 +107,8 @@ post_table ->
 
 where_clause -> "WHERE" expr
 
-group_by_clause -> "GROUP" "BY" ("(" selection_column_list ")" {% cdar %} | selection_column_list {% car %}) ("WITH" "ROLLUP"):? {%
-  d => new AST.GroupBy(d, d[3], !!d[5])
+group_by_clause -> "GROUP" "BY" ("(" selection_column_list ")" | selection_column_list) ("WITH" "ROLLUP"):? {%
+  d => new AST.GroupBy(d, d[2][0].text === '(' ? d[2][1] : d[2][0], !!d[3])
 %}
 
 having_clause -> "HAVING" expr
@@ -140,28 +135,30 @@ function makeBinaryExpr (d) {
 }
 %}
 
-parenthesized[expr] -> $expr {% caar %} | "(" ($expr {% caar %}) ")" {% makeUnaryExpr %}
-
 expr_list -> delimited[expr, ","] {% d => new AST.ExpressionList(d, undrill(d[0])) %}
 
-expr ->
-    "(" expr ")" {% cdar %}
-  | post_two_op_expr {% car %}
+expr -> two_op_expr {% car %}
 
-two_op_expr -> parenthesized[post_two_op_expr] {% car %}
+two_op_expr ->
+    post_two_op_expr {% car %}
+  | "(" two_op_expr ")" {% parenthesized %}
 
 post_two_op_expr ->
     expr ("OR" | "XOR" | "AND" | %condBinaryOp) one_op_expr {% makeBinaryExpr %}
   | post_one_op_expr {% car %}
 
-one_op_expr -> parenthesized[post_one_op_expr] {% car %}
+one_op_expr ->
+    post_one_op_expr {% car %}
+  | "(" one_op_expr ")" {% parenthesized %}
 
 post_one_op_expr ->
     ("NOT" | "!") boolean_primary {% makeUnaryExpr %}
   | boolean_primary ("IS" "NOT":?) (boolean | unknown) {% makeBinaryExpr %}
   | post_boolean_primary {% car %}
 
-boolean_primary -> parenthesized[post_boolean_primary] {% car %}
+boolean_primary ->
+    post_boolean_primary {% car %}
+  | "(" boolean_primary ")" {% parenthesized %}
 
 post_boolean_primary ->
     boolean_primary ("IS" "NOT":?) null_ {% makeBinaryExpr %}
@@ -169,7 +166,9 @@ post_boolean_primary ->
   | boolean_primary (%boolBinaryOp ("ANY" | "ALL")) subquery {% makeBinaryExpr %}
   | post_predicate {% car %}
 
-predicate -> parenthesized[post_predicate] {% car %}
+predicate ->
+    post_predicate {% car %}
+  | "(" predicate ")" {% parenthesized %}
 
 post_predicate ->
     bit_expr ("NOT":? "IN") subquery {% makeBinaryExpr %}
@@ -178,7 +177,9 @@ post_predicate ->
   | bit_expr ("NOT":? "LIKE") bit_expr {% makeBinaryExpr %}
   | post_bit_expr {% car %}
 
-bit_expr -> parenthesized[post_bit_expr] {% car %}
+bit_expr ->
+    post_bit_expr {% car %}
+  | "(" bit_expr ")" {% parenthesized %}
 
 post_bit_expr ->
     bit_expr ("DIV" | "MOD" | "*" | %arithBinaryOp) simple_expr {% makeBinaryExpr %}
@@ -194,7 +195,9 @@ interval_expr ->
     "DAY_MICROSECOND" | "DAY_SECOND" | "DAY_MINUTE" | "DAY_HOUR" | "YEAR_MONTH"
  ) {% caar %}) {% makeBinaryExpr %}
 
-simple_expr -> parenthesized[post_simple_expr] {% car %}
+simple_expr ->
+    post_simple_expr {% car %}
+  | "(" simple_expr ")" {% cdar %}
 
 post_simple_expr ->
     identifier {% car %}

@@ -18,12 +18,48 @@ class Node {
     this.tokens = drill(tokens)
   }
 
+  traverse (f) {
+    let result = []
+
+    const ret = f(this)
+    const [cont, retval] = Array.isArray(ret) ? ret : [ret]
+    if (retval !== undefined) {
+      result.push(retval)
+    }
+    if (cont) {
+      const tokens = Array.isArray(cont) ? cont : this.tokens
+      for (let i = 0; i < tokens.length; i++) {
+        const node = tokens[i]
+        if (node instanceof Node) {
+          result = result.concat(node.traverse(f))
+        }
+      }
+    }
+
+    return result
+  }
+
   toString () {
     return this.tokens.join(' ')
   }
 
   analyse () {
     console.warn('Analysing for', this, ' Unimplemented')
+  }
+
+  getRange () {
+    const firstToken = this.traverse(node => {
+      const firstToken = node.tokens[0]
+      return firstToken instanceof Node ? [[firstToken]]: [false, firstToken]
+    })[0]
+    const lastToken = this.traverse(node => {
+      const lastToken = node.tokens[node.tokens.length - 1]
+      return lastToken instanceof Node ? [[lastToken]]: [false, lastToken]
+    })[0]
+    return new ace.Range(
+      firstToken.line - 1, firstToken.col - 1,
+      lastToken.line - 1, lastToken.col + lastToken.text.length - 1
+    )
   }
 }
 
@@ -125,22 +161,22 @@ class SelectionSet extends Clause {
 }
 
 class From extends Clause {
-  constructor (tokens, tables, where, groupBy, having, order, limit) {
+  constructor (tokens, tables, where, groupBy, having, orders, limit) {
     super(tokens)
     this.tables = tables
     this.where = where
     this.groupBy = groupBy
     this.having = having
-    this.order = order
+    this.orders = orders
     this.limit = limit
   }
 
   toString () {
     return 'FROM ' + this.tables.map(x => x.toString()).join(', ') +
       (this.where ? ' WHERE ' + this.where : '') +
-      (this.groupBy ? ' GROUP BY ' + this.groupBy : '') +
+      (this.groupBy ? ' ' + this.groupBy : '') +
       (this.having ? ' HAVING ' + this.having : '') +
-      (this.order ? ' ORDER BY ' + this.order : '') +
+      (this.orders ? ' ORDER BY ' + this.orders.join(', ') : '') +
       (this.limit ? ' LIMIT ' + this.limit : '')
   }
 
@@ -154,13 +190,13 @@ class From extends Clause {
       view.addDepend(this.where.analyse(view))
     }
     if (this.groupBy) {
-      view.addDepend(this.groupBy.analyse(view))
+      this.groupBy.analyse(view).forEach(e => view.addDepend(e))
     }
     if (this.having) {
       view.addDepend(this.having.analyse(view))
     }
-    if (this.order) {
-      view.addDepend(this.order.analyse(view))
+    if (this.orders) {
+      this.orders.forEach(e => view.addDepend(e.analyse(view)))
     }
     view._postAnalysing = false
   }
@@ -178,7 +214,7 @@ class Join extends Clause {
 
   toString () {
     return [
-      this.left, this.operator, this.right,
+      this.left, this.operator, 'JOIN', this.right,
       this.on ? 'ON' : 'USING', this.on || `(${this.using})`
     ].join(' ')
   }
@@ -203,6 +239,10 @@ class GroupBy extends Clause {
     this.columns = columns
     this.with_rollup = with_rollup
   }
+
+  analyse (view) {
+    return this.columns.analyse(view)
+  }
 }
 
 class Order extends Clause {
@@ -210,6 +250,12 @@ class Order extends Clause {
     super(tokens)
     this.value = value
     this.direction = direction
+  }
+
+  analyse (view) {
+    const result = this.value.analyse(view)
+    result.ast = this
+    return result
   }
 }
 
@@ -370,7 +416,7 @@ class Immediate extends Expression {
     return this.tokens.join('')
   }
 
-  analyse () {
+  getVariables (view) {
     return
   }
 }

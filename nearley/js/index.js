@@ -46,12 +46,16 @@ const splitterParser = Split(['#diagram-container', '#inspector'], {
     'flex-basis':  `${gutterSize}px`,
   }),
 })
-const btnShowParseError = document.getElementById('btn-show-parse-error')
+const btnShowParseProblem = document.getElementById('btn-show-parse-problem')
 const divParseResult = document.getElementById('inspector')
 function parseText (action, editor) {
-  btnShowParseError.classList.remove('warning')
+  btnShowParseProblem.classList.remove('parse-problem')
+  btnShowParseProblem.classList.remove('parse-continue')
+  btnShowParseProblem.classList.remove('parse-error')
+  btnShowParseProblem.classList.remove('parse-warning')
   const text = editor.getValue()
   if (!text) {
+    // clear all results
     ReactDOM.unmountComponentAtNode(divParseResult)
     divParseResult.innerHTML = ''
     return
@@ -63,10 +67,13 @@ function parseText (action, editor) {
     result = AST.parse(text)
   } catch (e) {
     //console.log(e)
-    btnShowParseError.classList.add('warning')
+    btnShowParseProblem.classList.add('parse-problem')
+    btnShowParseProblem.classList.add('parse-error')
     return
   }
   if (!result) {
+    btnShowParseProblem.classList.add('parse-problem')
+    btnShowParseProblem.classList.add('parse-continue')
     return
   }
   setStorage(getTabName(), text)
@@ -75,6 +82,30 @@ function parseText (action, editor) {
 
   // create graph
   const graph = result.analyse().postfix()
+  // mark erroneous
+  const existingMarkers = editor.session.getMarkers()
+  // !!!
+  for (let i in existingMarkers) {
+    const marker = existingMarkers[i]
+    if (marker.type === 'highlight' || marker.type === 'erroneous') {
+      editor.session.removeMarker(marker.id)
+    }
+  }
+  graph.columns.forEach(coloum => {
+    if (coloum.dangling) {
+      btnShowParseProblem.classList.add('parse-problem')
+      btnShowParseProblem.classList.add('parse-warning')
+      for (let ast of coloum.asts) {
+        if (ast instanceof AST.ColumnSelection) {
+          ast = ast.expr
+        }
+        editor.session.addMarker(ast.getRange(), 'ace_erroneous', 'erroneous')
+        if (ast instanceof AST.ColumnSelection) {
+          break
+        }
+      }
+    }
+  })
 
   function addIndent (a, indent) {
     return Array.isArray(a) ?
@@ -147,10 +178,10 @@ const splitterMain = Split(['#left-panel', '#right-panel'], {
 })
 
 function adjustEditorHeight () {
+  document.getElementById('main').style.height =
+    window.innerHeight -
+    document.getElementsByTagName('header')[0].offsetHeight + 'px'
   if (window.innerWidth > SMALL_SCREEN_WIDTH) {
-    document.getElementById('main').style.height =
-      window.innerHeight -
-      document.getElementsByTagName('header')[0].offsetHeight + 'px'
   }
   editor.resize()
 }
@@ -181,6 +212,20 @@ document.getElementById('btn-undo').addEventListener('click', function (event) {
   editor.undo()
 })
 
+function highlightNode (node) {
+  const existingMarkers = editor.session.getMarkers()
+  // !!!
+  for (let i in existingMarkers) {
+    const marker = existingMarkers[i]
+    if (marker.type === 'highlight') {
+      editor.session.removeMarker(marker.id)
+    }
+  }
+  for (let ast of node.asts) {
+    editor.session.addMarker(ast.getRange(), 'ace_highlight', 'highlight')
+  }
+}
+
 
 /* code save and load */
 const savedCode = getStorage(getTabName())
@@ -190,6 +235,7 @@ if (savedCode) {
   if (oldCursorPosition) {
     editor.moveCursorToPosition(JSON.parse(oldCursorPosition))
   }
+  editor.selection.clearSelection()
 }
 window.addEventListener('beforeunload', function (e) {
   localStorage.setItem('editor-cursor', JSON.stringify(editor.getCursorPosition()))

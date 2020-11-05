@@ -187,20 +187,34 @@ header {
   font-weight: bold;
 }
 
-#btn-show-parse-error {
+#btn-show-parse-problem:not(.parse-problem) {
   visibility: hidden;
   width: 0;
+  padding: 0;
 }
 
-#btn-show-parse-error.warning {
-  visibility: unset;
-  width: unset;
+.parse-continue > #span-parse-error, .parse-continue > #span-parse-warning,
+.parse-error > #span-parse-continue, .parse-error > #span-parse-warning,
+.parse-warning > #span-parse-continue, .parse-warning > #span-parse-error {
+  display: none;
 }
 
 #editor {
   width: 100%;
   flex: 1 1 auto;
   overflow: auto;
+}
+
+.ace_marker-layer > div {
+  position: absolute;
+}
+
+.ace_erroneous {
+  background: red;
+}
+
+.ace_highlight {
+  background: yellow;
 }
 
 #diagram-container {
