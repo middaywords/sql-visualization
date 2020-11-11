@@ -417,7 +417,7 @@ class Immediate extends Expression {
   }
 
   getVariables (view) {
-    return
+    return new Set
   }
 }
 
