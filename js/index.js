@@ -91,7 +91,7 @@ function parseText (action, editor) {
       editor.session.removeMarker(marker.id)
     }
   }
-  graph.columns.forEach(coloum => {
+  for (let coloum of graph.viewColumns) {
     if (coloum.dangling) {
       btnShowParseProblem.classList.add('parse-problem')
       btnShowParseProblem.classList.add('parse-warning')
@@ -105,11 +105,11 @@ function parseText (action, editor) {
         }
       }
     }
-  })
+  }
 
   function addIndent (a, indent) {
     return Array.isArray(a) ?
-      a.map(i => addIndent(i, indent + '  ')).join('\n' + indent) : a
+      a.map(i => addIndent(i, indent === undefined ? '' : indent + '  ')).join('\n') : (indent || '') + a
   }
   const describe = graph.graph.describe()
 
@@ -149,7 +149,7 @@ ReactDOM.render( /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/Reac
   id: "inspector-describe"
 }, "Describe: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
   data: describe
-}), /*#__PURE__*/React.createElement("pre", null, addIndent(describe, '  ')))), divParseResult);
+}), /*#__PURE__*/React.createElement("pre", null, addIndent(describe)))), divParseResult);
 }
 
 

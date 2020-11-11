@@ -15,10 +15,6 @@ function cdar (d) {
   return d[1]
 }
 
-function cddar (d) {
-  return d[2]
-}
-
 function parenthesized (d) {
   d[1].tokens.push(d[2])
   d[1].tokens.unshift(d[0])
@@ -26,24 +22,20 @@ function parenthesized (d) {
 }
 
 function drill (l) {
-  return Array.isArray(l) ? Array.prototype.concat.apply([], l.filter(x => x).map(drill)) : [l]
-}
-
-function undrill (l) {
   return l.filter((e, i) => i % 2 === 0)
 }
 
-function drillString (l) {
-  return Array.isArray(l) ? l.filter(x => x).map(drillString).join(' ') : l && l.value
+function flatString (l) {
+  return Array.isArray(l) ? l.filter(x => x).map(flatString).join(' ') : l && l.value
 }
 
 
 function makeUnaryExpr (d) {
-  return new AST.UnaryOpExpression(d, drillString(d[0]), d[1])
+  return new AST.UnaryOpExpression(d, flatString(d[0]), d[1])
 }
 
 function makeBinaryExpr (d) {
-  return new AST.BinaryOpExpression(d, drillString(d[1]), d[0], d[2])
+  return new AST.BinaryOpExpression(d, flatString(d[1]), d[0], d[2])
 }
 
 
@@ -64,7 +56,7 @@ var grammar = {
     {"name": "main$macrocall$1$ebnf$1", "symbols": []},
     {"name": "main$macrocall$1$ebnf$1$subexpression$1", "symbols": ["main$macrocall$3", "main$macrocall$2"]},
     {"name": "main$macrocall$1$ebnf$1", "symbols": ["main$macrocall$1$ebnf$1$subexpression$1", "main$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "main$macrocall$1", "symbols": ["main$macrocall$2", "main$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
+    {"name": "main$macrocall$1", "symbols": ["main$macrocall$2", "main$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
     {"name": "main", "symbols": ["main$macrocall$1"], "postprocess": car},
     {"name": "as_clause$ebnf$1", "symbols": [{"literal":"AS","pos":54}], "postprocess": id},
     {"name": "as_clause$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -97,9 +89,9 @@ var grammar = {
     {"name": "selection_column_list$macrocall$1$ebnf$1", "symbols": []},
     {"name": "selection_column_list$macrocall$1$ebnf$1$subexpression$1", "symbols": ["selection_column_list$macrocall$3", "selection_column_list$macrocall$2"]},
     {"name": "selection_column_list$macrocall$1$ebnf$1", "symbols": ["selection_column_list$macrocall$1$ebnf$1$subexpression$1", "selection_column_list$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "selection_column_list$macrocall$1", "symbols": ["selection_column_list$macrocall$2", "selection_column_list$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
+    {"name": "selection_column_list$macrocall$1", "symbols": ["selection_column_list$macrocall$2", "selection_column_list$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
     {"name": "selection_column_list", "symbols": ["selection_column_list$macrocall$1"], "postprocess": 
-        d => new AST.SelectionSet(d, undrill(d[0]))
+        d => new AST.SelectionSet(d, drill(d[0]))
         },
     {"name": "selection_column$ebnf$1", "symbols": ["as_clause"], "postprocess": id},
     {"name": "selection_column$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
@@ -120,14 +112,14 @@ var grammar = {
     {"name": "from_clause$ebnf$5", "symbols": ["limit_clause"], "postprocess": id},
     {"name": "from_clause$ebnf$5", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "from_clause", "symbols": [{"literal":"FROM","pos":188}, "table_ref_commalist", "from_clause$ebnf$1", "from_clause$ebnf$2", "from_clause$ebnf$3", "from_clause$ebnf$4", "from_clause$ebnf$5"], "postprocess": 
-        d => new AST.From(d, undrill(d[1]), d[2] && d[2][1], d[3], d[4] && d[4][1], d[5] && undrill(d[5][1]), d[6] && d[6][1])
+        d => new AST.From(d, drill(d[1]), d[2] && d[2][1], d[3], d[4] && d[4][1], d[5] && drill(d[5][1]), d[6] && d[6][1])
         },
     {"name": "table_ref_commalist$macrocall$2", "symbols": ["table_ref"]},
     {"name": "table_ref_commalist$macrocall$3", "symbols": [{"literal":",","pos":218}]},
     {"name": "table_ref_commalist$macrocall$1$ebnf$1", "symbols": []},
     {"name": "table_ref_commalist$macrocall$1$ebnf$1$subexpression$1", "symbols": ["table_ref_commalist$macrocall$3", "table_ref_commalist$macrocall$2"]},
     {"name": "table_ref_commalist$macrocall$1$ebnf$1", "symbols": ["table_ref_commalist$macrocall$1$ebnf$1$subexpression$1", "table_ref_commalist$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "table_ref_commalist$macrocall$1", "symbols": ["table_ref_commalist$macrocall$2", "table_ref_commalist$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
+    {"name": "table_ref_commalist$macrocall$1", "symbols": ["table_ref_commalist$macrocall$2", "table_ref_commalist$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
     {"name": "table_ref_commalist", "symbols": ["table_ref_commalist$macrocall$1"], "postprocess": car},
     {"name": "table_ref", "symbols": [{"literal":"(","pos":227}, "table_ref", {"literal":")","pos":231}], "postprocess": cdar},
     {"name": "table_ref$ebnf$1$subexpression$1$ebnf$1", "symbols": [{"literal":"NATURAL","pos":240}], "postprocess": id},
@@ -143,7 +135,7 @@ var grammar = {
     {"name": "table_ref$ebnf$1", "symbols": ["table_ref$ebnf$1$subexpression$1"], "postprocess": id},
     {"name": "table_ref$ebnf$1", "symbols": [], "postprocess": function(d) {return null;}},
     {"name": "table_ref", "symbols": ["table_ref", "table_ref$ebnf$1", {"literal":"JOIN","pos":268}, "table", "join_constraint"], "postprocess": 
-        d => new AST.Join(d, drillString(d[1]), d[0], d[3], d[4][0], d[4][1])
+        d => new AST.Join(d, flatString(d[1]), d[0], d[3], d[4][0], d[4][1])
             },
     {"name": "table_ref", "symbols": ["table"], "postprocess": car},
     {"name": "join_constraint", "symbols": [{"literal":"ON","pos":286}, "expr"], "postprocess": d => [d[1], null]},
@@ -174,7 +166,7 @@ var grammar = {
     {"name": "order_substat_list$macrocall$1$ebnf$1", "symbols": []},
     {"name": "order_substat_list$macrocall$1$ebnf$1$subexpression$1", "symbols": ["order_substat_list$macrocall$3", "order_substat_list$macrocall$2"]},
     {"name": "order_substat_list$macrocall$1$ebnf$1", "symbols": ["order_substat_list$macrocall$1$ebnf$1$subexpression$1", "order_substat_list$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "order_substat_list$macrocall$1", "symbols": ["order_substat_list$macrocall$2", "order_substat_list$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
+    {"name": "order_substat_list$macrocall$1", "symbols": ["order_substat_list$macrocall$2", "order_substat_list$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
     {"name": "order_substat_list", "symbols": ["order_substat_list$macrocall$1"]},
     {"name": "order_substat$ebnf$1$subexpression$1", "symbols": [{"literal":"ASC","pos":441}]},
     {"name": "order_substat$ebnf$1$subexpression$1", "symbols": [{"literal":"DESC","pos":445}]},
@@ -187,8 +179,8 @@ var grammar = {
     {"name": "expr_list$macrocall$1$ebnf$1", "symbols": []},
     {"name": "expr_list$macrocall$1$ebnf$1$subexpression$1", "symbols": ["expr_list$macrocall$3", "expr_list$macrocall$2"]},
     {"name": "expr_list$macrocall$1$ebnf$1", "symbols": ["expr_list$macrocall$1$ebnf$1$subexpression$1", "expr_list$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "expr_list$macrocall$1", "symbols": ["expr_list$macrocall$2", "expr_list$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
-    {"name": "expr_list", "symbols": ["expr_list$macrocall$1"], "postprocess": d => new AST.ExpressionList(d, undrill(d[0]))},
+    {"name": "expr_list$macrocall$1", "symbols": ["expr_list$macrocall$2", "expr_list$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
+    {"name": "expr_list", "symbols": ["expr_list$macrocall$1"], "postprocess": d => new AST.ExpressionList(d, drill(d[0]))},
     {"name": "expr", "symbols": ["two_op_expr"], "postprocess": car},
     {"name": "two_op_expr", "symbols": ["post_two_op_expr"], "postprocess": car},
     {"name": "two_op_expr", "symbols": [{"literal":"(","pos":497}, "two_op_expr", {"literal":")","pos":501}], "postprocess": parenthesized},
@@ -390,7 +382,7 @@ var grammar = {
     {"name": "identifier_list$macrocall$1$ebnf$1", "symbols": []},
     {"name": "identifier_list$macrocall$1$ebnf$1$subexpression$1", "symbols": ["identifier_list$macrocall$3", "identifier_list$macrocall$2"]},
     {"name": "identifier_list$macrocall$1$ebnf$1", "symbols": ["identifier_list$macrocall$1$ebnf$1$subexpression$1", "identifier_list$macrocall$1$ebnf$1"], "postprocess": function arrconcat(d) {return [d[0]].concat(d[1]);}},
-    {"name": "identifier_list$macrocall$1", "symbols": ["identifier_list$macrocall$2", "identifier_list$macrocall$1$ebnf$1"], "postprocess": d => drill(d)},
+    {"name": "identifier_list$macrocall$1", "symbols": ["identifier_list$macrocall$2", "identifier_list$macrocall$1$ebnf$1"], "postprocess": d => d.flat(Infinity)},
     {"name": "identifier_list", "symbols": ["identifier_list$macrocall$1"], "postprocess": car},
     {"name": "identifier$subexpression$1", "symbols": [(sqlLexer.has("btstring") ? {type: "btstring"} : btstring)]},
     {"name": "identifier$subexpression$1", "symbols": [(sqlLexer.has("bkidentifier") ? {type: "bkidentifier"} : bkidentifier)]},
