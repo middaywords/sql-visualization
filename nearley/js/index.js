@@ -2,6 +2,7 @@
 
 const SMALL_SCREEN_WIDTH = 544
 const EXAMPLE_LIST = ['sql-script2', 'sql-script3']
+var nodeCount = 0;
 
 
 function getStorage (tag) {
@@ -133,23 +134,28 @@ function parseText (action, editor) {
     </div>,
     divParseResult)
 `
-ReactDOM.render( /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
-  id: "inspector-ast"
-}, "AST: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
-  data: result
-})), /*#__PURE__*/React.createElement("p", {
-  id: "inspector-resemble"
-}, "Resemble: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
-  data: result.toString()
-})), /*#__PURE__*/React.createElement("p", {
-  id: "inspector-graph"
-}, "Graph: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
-  data: graph
-})), /*#__PURE__*/React.createElement("p", {
-  id: "inspector-describe"
-}, "Describe: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
-  data: describe
-}), /*#__PURE__*/React.createElement("pre", null, addIndent(describe, '  ')))), divParseResult);
+  ReactDOM.render( /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+    id: "inspector-ast"
+  }, "AST: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+    data: result
+  })), /*#__PURE__*/React.createElement("p", {
+    id: "inspector-resemble"
+  }, "Resemble: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+    data: result.toString()
+  })), /*#__PURE__*/React.createElement("p", {
+    id: "inspector-graph"
+  }, "Graph: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+    data: graph
+  })), /*#__PURE__*/React.createElement("p", {
+    id: "inspector-describe"
+  }, "Describe: ", /*#__PURE__*/React.createElement(ReactInspector.ObjectInspector, {
+    data: describe
+  }), /*#__PURE__*/React.createElement("pre", null, addIndent(describe, '  ')))), divParseResult);
+
+  console.log(graph.graph);
+  let res = recursiveSearch(graph.graph, 0);
+  console.log(res.nodes);
+  console.log(res.edges);
 }
 
 
@@ -294,4 +300,67 @@ function p () {
     return
   }
   return AST.parse(text)
+}
+
+function recursiveSearch(item, parent_id) {
+  let nodes = new Array;
+  let edges = new Array;
+  // View
+  if ('columns' in item) {
+    let columns = Array.from(item.columns);
+    columns.forEach(column => {
+      nodes.push({
+        id: ++nodeCount,
+        name: column.name,
+        type: 'Column'
+      });
+      edges.push({parent_id, nodeCount});
+      let subset = recursiveSearch(column, nodeCount);
+      nodes = nodes.concat(subset.nodes);
+      edges = edges.concat(subset.edges);
+    });
+  }
+  // Column
+  else if ('froms' in item) {
+    let astnode = item.asts[item.asts.length - 1]
+    nodes.push({
+      id: ++nodeCount,
+      name: ('column' in astnode) ? (astnode.table.name + '.' + astnode.column.name) : (astnode.name),
+      type: 'Column'
+    });
+    edges.push({parent_id, nodeCount});
+    for (let value of item.froms.values()) {
+      let subset = recursiveSearch(value, nodeCount);
+      nodes = nodes.concat(subset.nodes);
+      edges = edges.concat(subset.edges);
+    }
+  }
+  // Expression
+  else if ('variables' in item) {
+    nodes.push({
+      id: ++nodeCount,
+      name: item.text,
+      type: 'Expression'
+    });
+    edges.push({parent_id, nodeCount});
+    for (let value of item.variables.values()) {
+      let subset = recursiveSearch(value, nodeCount);
+      nodes = nodes.concat(subset.nodes);
+      edges = edges.concat(subset.edges);
+    }
+  }
+  // Table
+  else if ('structure' in item) {
+    nodes.push({
+      id: ++nodeCount,
+      name: item.name,
+      type: 'Table'
+    });
+    edges.push({parent_id, nodeCount});
+  }
+
+  return {
+    nodes: nodes,
+    edges: edges
+  }
 }
