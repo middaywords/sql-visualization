@@ -1,6 +1,6 @@
 #@builtin "postprocessors.ne"
 
-delimited[el, delim] -> $el ($delim $el):* {% d => drill(d) %}
+delimited[el, delim] -> $el ($delim $el):* {% d => d.flat(Infinity) %}
 
 @lexer sqlLexer
 
@@ -19,10 +19,6 @@ function cdar (d) {
   return d[1]
 }
 
-function cddar (d) {
-  return d[2]
-}
-
 function parenthesized (d) {
   d[1].tokens.push(d[2])
   d[1].tokens.unshift(d[0])
@@ -30,15 +26,11 @@ function parenthesized (d) {
 }
 
 function drill (l) {
-  return Array.isArray(l) ? Array.prototype.concat.apply([], l.filter(x => x).map(drill)) : [l]
-}
-
-function undrill (l) {
   return l.filter((e, i) => i % 2 === 0)
 }
 
-function drillString (l) {
-  return Array.isArray(l) ? l.filter(x => x).map(drillString).join(' ') : l && l.value
+function flatString (l) {
+  return Array.isArray(l) ? l.filter(x => x).map(flatString).join(' ') : l && l.value
 }
 %}
 
@@ -67,7 +59,7 @@ post_select_stmt ->
     %}
 
 selection_column_list -> delimited[selection_column, ","] {%
-  d => new AST.SelectionSet(d, undrill(d[0]))
+  d => new AST.SelectionSet(d, drill(d[0]))
 %}
 
 selection_column -> post_selection_column as_clause:? {%
@@ -80,7 +72,7 @@ post_selection_column ->
   | identifier "." "*" {% d => new AST.Column(d, d[0], new AST.Keyword(d[2], d[2].value)) %}
 
 from_clause -> "FROM" table_ref_commalist where_clause:? group_by_clause:? having_clause:? order_clause:? limit_clause:? {%
-  d => new AST.From(d, undrill(d[1]), d[2] && d[2][1], d[3], d[4] && d[4][1], d[5] && undrill(d[5][1]), d[6] && d[6][1])
+  d => new AST.From(d, drill(d[1]), d[2] && d[2][1], d[3], d[4] && d[4][1], d[5] && drill(d[5][1]), d[6] && d[6][1])
 %}
 
 table_ref_commalist -> delimited[table_ref, ","] {% car %}
@@ -88,7 +80,7 @@ table_ref_commalist -> delimited[table_ref, ","] {% car %}
 table_ref ->
     "(" table_ref ")" {% cdar %}
   | table_ref ("NATURAL":? ("LEFT" "OUTER":? | "RIGHT") | "INNER" | "CROSS" | "FULL"):? "JOIN" table join_constraint {%
-      d => new AST.Join(d, drillString(d[1]), d[0], d[3], d[4][0], d[4][1])
+      d => new AST.Join(d, flatString(d[1]), d[0], d[3], d[4][0], d[4][1])
     %}
   | table {% car %}
 
@@ -127,15 +119,15 @@ limit_clause -> "LIMIT" %number
 ### EXPR ###
 @{%
 function makeUnaryExpr (d) {
-  return new AST.UnaryOpExpression(d, drillString(d[0]), d[1])
+  return new AST.UnaryOpExpression(d, flatString(d[0]), d[1])
 }
 
 function makeBinaryExpr (d) {
-  return new AST.BinaryOpExpression(d, drillString(d[1]), d[0], d[2])
+  return new AST.BinaryOpExpression(d, flatString(d[1]), d[0], d[2])
 }
 %}
 
-expr_list -> delimited[expr, ","] {% d => new AST.ExpressionList(d, undrill(d[0])) %}
+expr_list -> delimited[expr, ","] {% d => new AST.ExpressionList(d, drill(d[0])) %}
 
 expr -> two_op_expr {% car %}
 

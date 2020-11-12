@@ -9,13 +9,15 @@
 }(this, function () {
 'use strict'
 
-function drill (l) {
-  return Array.isArray(l) ? Array.prototype.concat.apply([], l.filter(x => x).map(drill)) : [l]
+function setConcat (a, b) {
+  for (let i of b) {
+    a.add(i)
+  }
 }
 
 class Node {
   constructor (tokens) {
-    this.tokens = drill(tokens)
+    this.tokens = tokens.flat(Infinity)
   }
 
   traverse (f) {
@@ -47,19 +49,24 @@ class Node {
     console.warn('Analysing for', this, ' Unimplemented')
   }
 
-  getRange () {
+  getStart () {
     const firstToken = this.traverse(node => {
       const firstToken = node.tokens[0]
       return firstToken instanceof Node ? [[firstToken]]: [false, firstToken]
     })[0]
+    return [firstToken.line - 1, firstToken.col - 1]
+  }
+
+  getEnd () {
     const lastToken = this.traverse(node => {
       const lastToken = node.tokens[node.tokens.length - 1]
       return lastToken instanceof Node ? [[lastToken]]: [false, lastToken]
     })[0]
-    return new ace.Range(
-      firstToken.line - 1, firstToken.col - 1,
-      lastToken.line - 1, lastToken.col + lastToken.text.length - 1
-    )
+    return [lastToken.line - 1, lastToken.col + lastToken.text.length - 1]
+  }
+
+  getRange () {
+    return new ace.Range(...this.getStart(), ...this.getEnd())
   }
 }
 
@@ -77,11 +84,8 @@ class Select extends Statement {
 
   analyse () {
     const result = this.from ? this.from.analyse() : new Graph.View(this)
-    result.columns = this.selections.analyse(result)
+    result.columns = this.selections.analyse()
     result.ast = this
-    if (this.from) {
-      this.from.postAnalyse(result)
-    }
     return result
   }
 }
@@ -103,8 +107,8 @@ class Alias extends Clause {
     this.alias = alias
   }
 
-  analyse (view) {
-    const result = this.expr.analyse(view)
+  analyse () {
+    const result = this.expr.analyse()
     result.name = this.alias.name
     result.ast = this
     return result
@@ -112,14 +116,15 @@ class Alias extends Clause {
 }
 
 class ColumnSelection extends Alias {
-  analyse (view) {
-    let result = this.expr.analyse(view)
-    result.name = this.alias ? this.alias.name :
+  analyse () {
+    return new Graph.ViewColumn(
+      this,
+      this.alias ? this.alias.name :
         this.expr instanceof Identifier ? this.expr.name :
         this.expr instanceof Column ? this.expr.column.name :
-        Graph.Column.anonymous
-    result.ast = this
-    return result
+        Graph.ViewColumn.anonymous,
+      this.expr.analyse()
+    )
   }
 }
 
@@ -130,8 +135,8 @@ class TableAlias extends Alias {
     this.alias = alias
   }
 
-  analyse (view) {
-    let result = this.table.analyse(view)
+  analyse () {
+    let result = this.table.analyse()
     if (!(result instanceof Graph.View)) {
       result = new Graph.View(this, [result])
     }
@@ -155,8 +160,8 @@ class SelectionSet extends Clause {
     return this.selections.join(', ')
   }
 
-  analyse (view) {
-    return this.selections.map(x => x.analyse(view))
+  analyse () {
+    return this.selections.map(x => x.analyse())
   }
 }
 
@@ -181,24 +186,21 @@ class From extends Clause {
   }
 
   analyse () {
-    return new Graph.View(this, this.tables.map(x => x.analyse()))
-  }
-
-  postAnalyse (view) {
-    view._postAnalysing = true
+    const view = new Graph.View(this, this.tables.map(x => x.analyse()))
     if (this.where) {
-      view.addDepend(this.where.analyse(view))
+      view.addDepend(this.where.analyse())
     }
     if (this.groupBy) {
-      this.groupBy.analyse(view).forEach(e => view.addDepend(e))
+      // todo
+      //this.groupBy.analyse().forEach(e => view.addDepend(e))
     }
     if (this.having) {
-      view.addDepend(this.having.analyse(view))
+      view.addDepend(this.having.analyse())
     }
     if (this.orders) {
-      this.orders.forEach(e => view.addDepend(e.analyse(view)))
+      this.orders.forEach(e => view.addDepend(e.analyse()))
     }
-    view._postAnalysing = false
+    return view
   }
 }
 
@@ -240,8 +242,8 @@ class GroupBy extends Clause {
     this.with_rollup = with_rollup
   }
 
-  analyse (view) {
-    return this.columns.analyse(view)
+  analyse () {
+    return this.columns.analyse()
   }
 }
 
@@ -252,36 +254,43 @@ class Order extends Clause {
     this.direction = direction
   }
 
-  analyse (view) {
-    const result = this.value.analyse(view)
+  analyse () {
+    const result = this.value.analyse()
     result.ast = this
     return result
   }
 }
 
 class Expression extends Node {
-  static _updateVariables (variables, propNode) {
-    if (propNode instanceof Graph.Expression) {
-      for (let i of propNode.variables) {
-        variables.add(i)
-      }
-    } else if (propNode instanceof Graph.Node) {
-      variables.add(propNode)
+  static _addVariables (variables, value) {
+    const existing = variables.filter(x =>
+      x instanceof Graph.Variable &&
+      x.tableName === value.tableName && x.name === value.name
+    )[0]
+    if (existing) {
+      existing.asts.push(value.ast)
+    } else {
+      variables.push(value)
     }
   }
 
-  getVariables (view) {
-    const variables = new Set
+  static _updateVariables (variables, value) {
+    if (Array.isArray(value)) {
+      value.map(x => Expression._addVariables(variables, x))
+    } else {
+      Expression._addVariables(variables, value)
+    }
+  }
+
+  analyse () {
+    const variables = []
     for (let prop in this) {
-      if (this[prop] instanceof Node) {
-        Expression._updateVariables(variables, this[prop].analyse(view))
+      const node = this[prop]
+      if (node instanceof Node) {
+        Expression._updateVariables(variables, node.analyse())
       }
     }
     return variables
-  }
-
-  analyse (view) {
-    return new Graph.Expression(this, this.getVariables(view))
   }
 }
 
@@ -295,10 +304,10 @@ class ExpressionList extends Expression {
     return this.exprs.join(', ')
   }
 
-  getVariables (view) {
-    const variables = new Set
+  analyse () {
+    const variables = []
     for (let i = 0; i < this.exprs.length; i++) {
-      Expression._updateVariables(variables, this.exprs[i].analyse(view))
+      Expression._updateVariables(variables, this.exprs[i].analyse())
     }
     return variables
   }
@@ -346,8 +355,8 @@ class FunctionCall extends Expression {
     return this.func + '(' + this.parameters + ')'
   }
 
-  getVariables (view) {
-    return this.parameters.getVariables(view)
+  analyse () {
+    return this.parameters.analyse()
   }
 }
 
@@ -376,17 +385,17 @@ class Case extends Expression {
     this.else_ = else_
   }
 
-  getVariables (view) {
-    const variables = new Set
+  analyse () {
+    const variables = []
     if (this.expr) {
-      Expression._updateVariables(variables, this.expr.analyse(view))
+      Expression._updateVariables(variables, this.expr.analyse())
     }
     for (let i = 0; i < this.whenList.length; i++) {
-      Expression._updateVariables(variables, this.whenList[i][0].analyse(view))
-      Expression._updateVariables(variables, this.whenList[i][1].analyse(view))
+      Expression._updateVariables(variables, this.whenList[i][0].analyse())
+      Expression._updateVariables(variables, this.whenList[i][1].analyse())
     }
     if (this.else_) {
-      Expression._updateVariables(variables, this.else_.analyse(view))
+      Expression._updateVariables(variables, this.else_.analyse())
     }
     return variables
   }
@@ -416,8 +425,8 @@ class Immediate extends Expression {
     return this.tokens.join('')
   }
 
-  getVariables (view) {
-    return new Set
+  analyse () {
+    return []
   }
 }
 
@@ -428,8 +437,8 @@ class Column extends Immediate {
     this.column = column
   }
 
-  analyse (view) {
-    return new Graph.Column(this, this.column.name, view, this.table.name)
+  analyse () {
+    return [new Graph.Variable(this, this.column.name, this.table.name)]
   }
 }
 
@@ -450,8 +459,8 @@ class Identifier extends Immediate {
     return this.tokens[0].text
   }
 
-  analyse (view) {
-    return new Graph.Column(this, this.name, view)
+  analyse () {
+    return [new Graph.Variable(this, this.name)]
   }
 }
 
