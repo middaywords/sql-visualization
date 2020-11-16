@@ -234,3 +234,11 @@ footer {
 footer p {
   margin: unset;
 }
+
+.ep{
+  display: none;
+}
+
+.workflow-wrapper {
+  padding: 0.5rem .25rem .5rem .5rem;
+}

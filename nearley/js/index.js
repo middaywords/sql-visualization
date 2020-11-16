@@ -1,8 +1,13 @@
 'use strict'
+jsWorkflow.ready(function(){
+
 
 const SMALL_SCREEN_WIDTH = 544
 const EXAMPLE_LIST = ['sql-script2', 'sql-script3']
 var nodeCount = 0;
+let globalNodes, globalEdges;
+// $("#graph").hide();
+
 
 
 function getStorage (tag) {
@@ -36,7 +41,7 @@ document.getElementById('btn-about').addEventListener('click', function (event) 
 
 
 /* parser */
-const splitterParser = Split(['#diagram-container', '#inspector'], {
+const splitterParser = Split([ '#inspector'], {
   gutterSize: 5,
   direction: 'vertical',
   elementStyle: (dimension, size, gutterSize) => ({
@@ -153,9 +158,21 @@ function parseText (action, editor) {
   }), /*#__PURE__*/React.createElement("pre", null, addIndent(describe, '  ')))), divParseResult);
 
   console.log(graph.graph);
+  nodeCount = 0;
   let res = recursiveSearch(graph.graph, 0);
-  console.log(res.nodes);
-  console.log(res.edges);
+  // console.log(JSON.stringify(res.nodes));
+  // console.log(JSON.stringify(res.edges));
+  // console.log(res.nodes);
+  // console.log(res.edges);
+  for (var i = 0; i < res.nodes.length; i++) {
+    res.nodes[i].depth = 1;
+  }
+  globalNodes = res.nodes;
+  globalEdges = res.edges;
+  console.log(globalNodes);
+  console.log(globalEdges);
+  initializeElements(res.nodes, res.edges);
+
 }
 
 
@@ -169,9 +186,20 @@ for (let script of document.getElementsByTagName('script')) {
     break
   }
 }
-editor.session.setMode('ace/mode/sql')
-editor.on('change', parseText)
+editor.session.setMode('ace/mode/sql');
 
+  editor.on('change', parseText);
+
+  $("#refresh-workflow").on('click', function(){
+
+  });
+  $("#enable-arrow").on('change', function () {
+    if ($("#enable-arrow").is(':checked')) {
+      $(".ep").show();
+    } else {
+      $(".ep").hide();
+    }
+  });
 const splitterMain = Split(['#left-panel', '#right-panel'], {
   elementStyle: (dimension, size, gutterSize) => ({
     'flex-basis': `calc(${size}% - ${gutterSize}px)`,
@@ -312,7 +340,8 @@ function recursiveSearch(item, parent_id) {
       nodes.push({
         id: ++nodeCount,
         name: column.name,
-        type: 'Column'
+        type: 'Column',
+        depth: 1
       });
       edges.push({parent_id, nodeCount});
       let subset = recursiveSearch(column, nodeCount);
@@ -364,3 +393,131 @@ function recursiveSearch(item, parent_id) {
     edges: edges
   }
 }
+
+
+
+function initializeElements(nodes, edges){
+
+
+  $("#workflow-1").empty();
+  // 手动布局
+  // TODO 先把根节点找出来，对每个子节点编上高度。这不是典型的树，有的节点 有可能会
+  //找到所有根
+
+  for (var i = 0; i < nodes.length; i++) {
+    nodes[i].depth = 1;
+  }
+
+  let roots = new Array();
+  for (var i = 0; i < edges.length; i++) {
+    if (edges[i].parent_id == 0) {
+      roots.push(nodes[edges[i].nodeCount - 1]);
+      nodes[edges[i].nodeCount - 1].depth = 1;
+    }
+  }
+
+
+  let queue = new Array();//存储下标
+  let queueHead = 0;
+  let visited = new Array(nodes.length);
+  for (var i = 0; i < visited.length; i++) {
+    visited[i] = false;
+  }
+  for (var i = 0; i < roots.length; i++) {
+    queue.push(roots[i].id - 1);
+    visited[roots[i].id - 1] = true;
+  }
+
+
+  while(queueHead < queue.length){
+    let id = queue[queueHead++] + 1;
+
+    for(let i = 0; i < edges.length; i++){
+      let nextNodeIndex = edges[i].nodeCount - 1;
+      if (edges[i].parent_id == id) {
+        if (!visited[nextNodeIndex]) {
+          queue.push(nextNodeIndex);
+          visited[nextNodeIndex] = true;
+        }
+        nodes[nextNodeIndex].depth = Math.max(nodes[nextNodeIndex].depth, nodes[id-1].depth + 1);
+      }
+    }
+
+
+  }
+
+  // console.log(nodeDepth);
+  let maxDepth = 0;//找到最大的深度
+  for (var i = 0; i < nodes.length; i++) {
+    maxDepth = Math.max(nodes[i].depth, maxDepth);
+  }
+  //计算每个深度的元素个数
+  let nodeDepthWidth = new Array(maxDepth);
+  for (var i = 0; i < nodeDepthWidth.length; i++) {
+    nodeDepthWidth[i] = 0;
+  }
+  for (var i = 0; i < nodes.length; i++) {
+    nodeDepthWidth[nodes[i].depth - 1] ++;
+  }
+  let maxWidth = Math.max.apply(null, nodeDepthWidth);
+  let currentLayout = new Array(maxDepth);
+  for (var i = 0; i < currentLayout.length; i++) {
+    currentLayout[i] = 0;
+  }
+
+  for (let i = 0; i < nodes.length; i++) {
+    let divState = document.createElement("div");
+    let divEp = document.createElement("div");
+    divEp.className = 'ep';
+    divState.className = "w state";
+    divState.id = "node-" + nodes[i].id;
+    divState.innerHTML = nodes[i].name + divEp.outerHTML;
+    divState.style.top = (150 * (nodes[i].depth) + 50) + 'px';
+    divState.style.left = (50 + 600 * ((maxWidth - nodeDepthWidth[nodes[i].depth-1]++) / 2 + currentLayout[nodes[i].depth-1]++)) + 'px';
+    $("#workflow-1").append(divState);
+  }
+
+  var transitionData,
+        workflow1;
+      // Transition (Connection between States) Data
+      transitionData = {transitions:{}};
+      for (let i = 0; i < edges.length; i++) {
+        let edge = edges[i];
+        if (edge.parent_id == 0) {
+          continue;
+        }
+        let fromNodeId = "node-" + nodes[edge.parent_id - 1].id;
+        let toNodeId = "node-" + nodes[edge.nodeCount - 1].id;
+        if (transitionData.transitions[fromNodeId]) {
+          transitionData.transitions[fromNodeId] += "," + toNodeId;
+        } else {
+          transitionData.transitions[fromNodeId] = toNodeId;
+        }
+      }
+      console.log(transitionData);
+      // Create a new workflow instance as workflow1
+      workflow1 = new jsWorkflow.Instance();
+
+      // Initialize workflow1 with workflow container id
+      workflow1.init('workflow-1');
+
+      // Establish transitions among all the workflow States
+      workflow1.instance.createStateTrasitions(transitionData);
+
+}
+
+$("#graph").hide();
+$("#show-graph").click(function(){
+  $("#main").hide();
+  $("#graph").show();
+  initializeElements(globalNodes, globalEdges);
+
+});
+$("#refresh-workflow").click(function(){
+  initializeElements(globalNodes, globalEdges);
+});
+$("#back-edit").click(function(){
+  $("#main").show();
+  $("#graph").hide();
+});
+});
