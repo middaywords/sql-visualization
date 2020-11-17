@@ -167,8 +167,6 @@ function parseText (action, editor) {
   }
   globalNodes = res.nodes;
   globalEdges = res.edges;
-  console.log(globalNodes);
-  console.log(globalEdges);
   draw(res.nodes, res.edges);
 }
 
