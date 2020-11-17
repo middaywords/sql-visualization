@@ -10,79 +10,101 @@
 'use strict'
 
 function initializeElements(nodes, edges){
-  $("#workflow-1").empty();
-  // 手动布局
-  // TODO 先把根节点找出来，对每个子节点编上高度。这不是典型的树，有的节点 有可能会
-  //找到所有根
-
   for (var i = 0; i < nodes.length; i++) {
-    nodes[i].depth = 1;
-  }
+  				nodes[i].children = [];
+  			}
+  			for (var i = 0; i < edges.length; i++) {
+  				if (edges[i].from > 0) {
+  					nodes[edges[i].from - 1].children.push(edges[i].to);
+  				}
+  			}
+  			$("#workflow-1").empty();
+  			// 手动布局
+  			// TODO 先把根节点找出来，对每个子节点编上高度。这不是典型的树，有的节点 有可能会
+  			//找到所有根
+  			for (var i = 0; i < nodes.length; i++) {
+  				nodes[i].depth = 1;
+  			}
 
-  let roots = new Array();
-  for (var i = 0; i < edges.length; i++) {
-    if (edges[i].from == 0) {
-      roots.push(nodes[edges[i].to - 1]);
-      nodes[edges[i].to - 1].depth = 1;
-    }
-  }
+  			let rootIndexes = new Array();
+  			for (var i = 0; i < edges.length; i++) {
+  				if (edges[i].from == 0) {
+  					rootIndexes.push(edges[i].to - 1);
+  				}
+  			}
+  			let visited = new Array(nodes.length);
+  			for (var i = 0; i < visited.length; i++) {
+  				visited[i] = false;
+  			}
+  			let currentWidth = 0;
+  			let currentMaxWidth = 0;
+  			let widthDepth = new Array(100);
+  			for (var i = 0; i < widthDepth.length; i++) {
+  				widthDepth[i] = 1;
+  			}
 
-  let queue = new Array();//存储下标
-  let queueHead = 0;
-  let visited = new Array(nodes.length);
-  for (var i = 0; i < visited.length; i++) {
-    visited[i] = false;
-  }
-  for (var i = 0; i < roots.length; i++) {
-    queue.push(roots[i].id - 1);
-    visited[roots[i].id - 1] = true;
-  }
+  			function dfs(nodeIndex, depth = 1){
+  				nodes[nodeIndex].depth = Math.max(depth, nodes[nodeIndex].depth);
+  				let children = nodes[nodeIndex].children;
+  				if(children.length == 0){
+  					nodes[nodeIndex].left = currentWidth + widthDepth[depth]++;
+  					currentMaxWidth = Math.max(currentMaxWidth, nodes[nodeIndex].left);
+            for (var i = depth + 1; i < widthDepth.length; i++) {
+              widthDepth[i] = widthDepth[depth];
+            }
+  					return nodes[nodeIndex].left;
+  				}
+  				if (visited[nodeIndex]) {
+  					return -1;
+  				}
+  				visited[nodeIndex] = true;
+  				let sumWidth = 0;
+  				let countValidChild = 0;
+  				for (var i = 0; i < children.length; i++) {
+  					let nextIndex = children[i] - 1;
+  				  let left = dfs(nextIndex, depth + 1);
+  					if (left > 0) {
+  						sumWidth += left - currentWidth;
+  						countValidChild ++;
+  					}
+  				}
+  				sumWidth /= countValidChild;
+  				nodes[nodeIndex].left = currentWidth + Math.max(sumWidth,widthDepth[depth]);
+  				currentMaxWidth = Math.max(currentMaxWidth, nodes[nodeIndex].left);
+  				widthDepth[depth] = nodes[nodeIndex].left + 1 - currentWidth;
 
-  while(queueHead < queue.length){
-    let id = queue[queueHead++] + 1;
+  				return nodes[nodeIndex].left;
+  			}
 
-    for(let i = 0; i < edges.length; i++){
-      let nextNodeIndex = edges[i].to - 1;
-      if (edges[i].from == id) {
-        if (!visited[nextNodeIndex]) {
-          queue.push(nextNodeIndex);
-          visited[nextNodeIndex] = true;
-        }
-        nodes[nextNodeIndex].depth = Math.max(nodes[nextNodeIndex].depth, nodes[id-1].depth + 1);
-      }
-    }
-  }
+  			for (var i = 0; i < rootIndexes.length; i++) {
+  				dfs(rootIndexes[i],1);
+  				currentWidth = currentMaxWidth;
+  				currentMaxWidth = 0;
+  				for (var j = 0; j < widthDepth.length; j++) {
+  					widthDepth[j] = 1;
+  				}
+  			}
 
-  // console.log(nodeDepth);
-  let maxDepth = 0;//找到最大的深度
-  for (var i = 0; i < nodes.length; i++) {
-    maxDepth = Math.max(nodes[i].depth, maxDepth);
-  }
-  //计算每个深度的元素个数
-  let nodeDepthWidth = new Array(maxDepth);
-  for (var i = 0; i < nodeDepthWidth.length; i++) {
-    nodeDepthWidth[i] = 0;
-  }
-  for (var i = 0; i < nodes.length; i++) {
-    nodeDepthWidth[nodes[i].depth - 1] ++;
-  }
-  let maxWidth = Math.max.apply(null, nodeDepthWidth);
-  let currentLayout = new Array(maxDepth);
-  for (var i = 0; i < currentLayout.length; i++) {
-    currentLayout[i] = 0;
-  }
+  			for (let i = 0; i < nodes.length; i++) {
+  				let divState = document.createElement("div");
+  				let divEp = document.createElement("div");
+  				divEp.className = 'ep';
+  				divState.className = "w state";
+  				divState.id = "node-" + nodes[i].id;
+  				divState.title = nodes[i].name;
+  				if (nodes[i].name.length > 20) {
+  						divState.innerHTML = nodes[i].name.substring(0,20) + "..." + divEp.outerHTML;
+  				} else {
+  						divState.innerHTML = nodes[i].name + divEp.outerHTML;
+  				}
 
-  for (let i = 0; i < nodes.length; i++) {
-    let divState = document.createElement("div");
-    let divEp = document.createElement("div");
-    divEp.className = 'ep';
-    divState.className = "w state";
-    divState.id = "node-" + nodes[i].id;
-    divState.innerHTML = nodes[i].name + divEp.outerHTML;
-    divState.style.top = (150 * (nodes[i].depth) + 50) + 'px';
-    divState.style.left = (50 + 600 * ((maxWidth - nodeDepthWidth[nodes[i].depth-1]++) / 2 + currentLayout[nodes[i].depth-1]++)) + 'px';
-    $("#workflow-1").append(divState);
-  }
+  				divState.style.top = (50 + 150 * (nodes[i].depth)) + 'px';
+  				divState.style.maxWidth = "150px";
+  				// divState.style.left = (50 + 300 * ((maxWidth - nodeDepthWidth[nodes[i].depth-1]++) / 2 + currentLayout[nodes[i].depth-1]++)) + 'px';
+  				divState.style.left = (50 + 300 * (nodes[i].left)) + 'px';
+  				$("#workflow-1").append(divState);
+  			}
+
 
   var transitionData,
         workflow1;
