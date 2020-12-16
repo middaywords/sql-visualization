@@ -1,257 +1,267 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <title>SQL Visualization</title>
 
-    <meta charset="UTF-8" />
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="css/jsWorkflow.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
-        integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
-        crossorigin="anonymous" />
-    <link rel="stylesheet" href="css/github-corner.css" />
-    <link rel="stylesheet" href="css/drawer.css" />
-    <link rel="stylesheet" href="css/nooverflow.css" />
-    <link rel="stylesheet" href="css/index.css" />
-    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" rel="stylesheet">
-  </head>
+<head>
+  <title>SQL Visualization</title>
 
-  <body>
-    <section id="dialog">
-      <div class="dialog-container" id="dialog-saveload" aria-hidden="true">
-        <div tabindex="-1" data-a11y-dialog-hide></div>
-        <dialog aria-labelledby="dialog-title">
-          <div class="dialog-header">
-            <h3 class="dialog-title">Load or save editor text</h3>
-            <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window" aria-hidden="true">
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/jsWorkflow.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+    integrity="sha512-NhSC1YmyruXifcj/KFRWoC561YpHpc5Jtzgvbuzx5VozKpWvQ+4nXhPdFgmx8xqexRcpAglTj9sIBWINXa8x5w=="
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="css/github-corner.css" />
+  <link rel="stylesheet" href="css/drawer.css" />
+  <link rel="stylesheet" href="css/nooverflow.css" />
+  <link rel="stylesheet" href="css/index.css" />
+  <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-          <div class="dialog-body">
-            <p>
-              Input from file:
-              <input id="input-file" type="file" />
-            </p>
-
-            <p>
-              <label for="select-example">Load examples?</label>
-              <select name="example" id="select-example">
-                <option value="" selected="selected"></option>
-              </select>
-            </p>
-          </div>
-        </dialog>
-      </div>
-
-      <div class="dialog-container" id="dialog-about" aria-hidden="true">
-        <div tabindex="-1" data-a11y-dialog-hide></div>
-        <dialog aria-labelledby="dialog-title">
-          <div class="dialog-header">
-            <h3 class="dialog-title">About</h3>
-            <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window" aria-hidden="true">
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
-
-          <div class="dialog-body">
-            <p>Source: <a href="https://github.com/middaywords/sql-visualization" target="_blank">GitHub</a></p>
-          </div>
-        </dialog>
-      </div>
-    </section>
-
-    <header>
-      <h1 class="title">📜 SQL Visualization</h1>
-    </header>
-
-    <section id="main">
-      <div id="left-panel" class="panel">
-        <div id="editor-bar">
-          <select name="fontsize" id="select-fontsize" aria-label="Change font size" alt="Change font size">
-            <option value="" selected="selected">A</option>
-            <option value=8>8</option>
-            <option value=9>9</option>
-            <option value=10>10</option>
-            <option value=11>11</option>
-            <option value=12>12</option>
-            <option value=13>13</option>
-            <option value=14>14</option>
-            <option value=15>15</option>
-            <option value=16>16</option>
-            <option value=17>17</option>
-            <option value=18>18</option>
-            <option value=19>19</option>
-            <option value=20>20</option>
-            <option value=21>21</option>
-            <option value=22>22</option>
-            <option value=23>23</option>
-            <option value=24>24</option>
-            <option value=25>25</option>
-            <option value=26>26</option>
-            <option value=27>27</option>
-            <option value=28>28</option>
-            <option value=29>29</option>
-            <option value=30>30</option>
-          </select>
-          <button title="Load or save text" aria-label="Load or save text" id="btn-saveload">
-            <span>💾</span>
-            <span class="hideable">Save/Load</span>
-          </button>
-          <button title="Clear editor" aria-label="Clear editor" id="btn-clear">
-            <span>🔄</span>
-            <span class="hideable">Clear</span>
-          </button>
-          <button title="Redo edit" aria-label="Redo edit" id="btn-redo">
-            <span>↪️</span>
-            <span class="hideable">Redo</span>
-          </button>
-          <button title="Undo edit" aria-label="Undo edit" id="btn-undo">
-            <span>↩️</span>
-            <span class="hideable">Undo</span>
-          </button>
-          <button title="Show graph" aria-label="Show graph" name="button" id="show-graph">
-            <span>🚀</span>
-            <span class="hideable">Show Graph</span>
-          </button>
-
-          <button class="flex-float-right-first" id="btn-show-parse-problem">
-            <span id="span-parse-continue">…</span>
-            <span id="span-parse-error">❌</span>
-            <span id="span-parse-warning">‼️</span>
-          </button>
-          <button class="flex-float-right" title="Show info about this program" aria-label="Show info about this program" id="btn-about">
-            <span>⚙️</span>
-            <span class="hideable">Settings/About</span>
+<body>
+  <section id="dialog">
+    <div class="dialog-container" id="dialog-saveload" aria-hidden="true">
+      <div tabindex="-1" data-a11y-dialog-hide></div>
+      <dialog aria-labelledby="dialog-title">
+        <div class="dialog-header">
+          <h3 class="dialog-title">Load or save editor text</h3>
+          <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window"
+            aria-hidden="true">
+            <span aria-hidden="true">×</span>
           </button>
         </div>
-        <div id="editor"></div>
-      </div>
 
-      <div id="right-panel" class="panel">
-        <!-- <div id="diagram-container" style="display: none">
+        <div class="dialog-body">
+          <p>
+            Input from file:
+            <input id="input-file" type="file" />
+          </p>
+
+          <p>
+            <label for="select-example">Load examples?</label>
+            <select name="example" id="select-example">
+              <option value="" selected="selected"></option>
+            </select>
+          </p>
+        </div>
+      </dialog>
+    </div>
+
+    <div class="dialog-container" id="dialog-about" aria-hidden="true">
+      <div tabindex="-1" data-a11y-dialog-hide></div>
+      <dialog aria-labelledby="dialog-title">
+        <div class="dialog-header">
+          <h3 class="dialog-title">About</h3>
+          <button type="button" class="dialog-btn-close" data-a11y-dialog-hide aria-label="Close this dialog window"
+            aria-hidden="true">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+
+        <div class="dialog-body">
+          <p>Source: <a href="https://github.com/middaywords/sql-visualization" target="_blank">GitHub</a></p>
+        </div>
+      </dialog>
+    </div>
+  </section>
+
+  <header>
+    <h1 class="title">📜 SQL Visualization</h1>
+  </header>
+
+  <section id="main">
+    <div id="left-panel" class="panel">
+      <div id="editor-bar">
+        <select name="fontsize" id="select-fontsize" aria-label="Change font size" alt="Change font size">
+          <option value="" selected="selected">A</option>
+          <option value=8>8</option>
+          <option value=9>9</option>
+          <option value=10>10</option>
+          <option value=11>11</option>
+          <option value=12>12</option>
+          <option value=13>13</option>
+          <option value=14>14</option>
+          <option value=15>15</option>
+          <option value=16>16</option>
+          <option value=17>17</option>
+          <option value=18>18</option>
+          <option value=19>19</option>
+          <option value=20>20</option>
+          <option value=21>21</option>
+          <option value=22>22</option>
+          <option value=23>23</option>
+          <option value=24>24</option>
+          <option value=25>25</option>
+          <option value=26>26</option>
+          <option value=27>27</option>
+          <option value=28>28</option>
+          <option value=29>29</option>
+          <option value=30>30</option>
+        </select>
+        <button title="Load or save text" aria-label="Load or save text" id="btn-saveload">
+          <span>💾</span>
+          <span class="hideable">Load</span>
+        </button>
+        <button title="Clear editor" aria-label="Clear editor" id="btn-clear">
+          <span>🔄</span>
+          <span class="hideable">Clear</span>
+        </button>
+        <button title="Redo edit" aria-label="Redo edit" id="btn-redo">
+          <span>↪️</span>
+          <span class="hideable">Redo</span>
+        </button>
+        <button title="Undo edit" aria-label="Undo edit" id="btn-undo">
+          <span>↩️</span>
+          <span class="hideable">Undo</span>
+        </button>
+        <button title="Parse script" aria-label="Parse script" id="btn-parse">
+          <span>➡</span>
+          <span class="hideable">Parse script</span>
+        </button>
+        <button title="Show graph" aria-label="Show graph" name="button" id="show-graph">
+          <span>🚀</span>
+          <span class="hideable">Show Graph</span>
+        </button>
+
+        <button class="flex-float-right-first" id="btn-show-parse-problem">
+          <span id="span-parse-continue">…</span>
+          <span id="span-parse-error">❌</span>
+          <span id="span-parse-warning">‼️</span>
+        </button>
+        <button class="flex-float-right" title="Show info about this program" aria-label="Show info about this program"
+          id="btn-about">
+          <span>⚙️</span>
+          <span class="hideable">Settings/About</span>
+        </button>
+      </div>
+      <div id="editor"></div>
+    </div>
+
+    <div id="right-panel" class="panel">
+      <!-- <div id="diagram-container" style="display: none">
 
 
         </div> -->
-        
-        <div id="inspector" style="height: calc(100% - 2.5px)">
 
-        </div>
+      <div id="inspector" style="height: calc(100% - 2.5px)">
 
       </div>
-    </section>
-    <section id="graph">
-      <div class="workflow-wrapper">
-        <div class="info">
-          <h3>Workflow of Sql</h3>
-          <button type="button" name="button" class="btn" id="refresh-workflow" style="margin-left:10px;border: 2px solid silver;">复原</button>
-          <button type="button" name="button" class="btn" id="back-edit" style="margin-left:10px;border:2px solid silver;">返回编辑</button>
-          <div class="checkbox" style="margin-left:70px; display:inline;">
-            <label>
-              <input type="checkbox" class="form-check-input" id="enable-arrow">
-              允许自定义新流向
-          </label>
-          </div>
-        </div>
 
-            <div class="workflow" id="workflow-1">
-              <!-- <div class="create-state">Add a new State</div>
+    </div>
+  </section>
+  <section id="graph">
+    <div class="workflow-wrapper">
+      <div class="info">
+        <h3>Workflow of Sql</h3>
+        <button type="button" name="button" class="btn" id="refresh-workflow"
+          style="margin-left:10px;border: 2px solid silver;">复原</button>
+        <button type="button" name="button" class="btn" id="back-edit"
+          style="margin-left:10px;border:2px solid silver;">返回编辑</button>
+        <div class="checkbox" style="margin-left:70px; display:inline;">
+          <label>
+            <input type="checkbox" class="form-check-input" id="enable-arrow">
+            允许自定义新流向
+          </label>
+        </div>
+      </div>
+
+      <div class="workflow" id="workflow-1">
+        <!-- <div class="create-state">Add a new State</div>
           <div class="w state" id="new">New<div class="ep"></div>	</div>
                 <div class="w state" id="open">Open<div class="ep"></div>	</div>
 
                 <div class="w state" id="resolved">Resolved<div class="ep"></div></div>
                 <div class="w state" id="reopened">Reopened<div class="ep"></div></div>
                 <div class="w state" id="closed">Closed<div class="ep"></div></div> -->
-            </div>
-        </div>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section id="script">
-      <!-- editor -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"
-          integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw=="
-          crossorigin="anonymous"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-sql.min.js"
-          integrity="sha512-wsE6/Wq6h/sr67KuoliMHvnS5FGqI1oW/gvbLgYKtWyfCChHi/T6tt8i+qvaIEdA9+JiW+d+51cA5fRdlfjGtw=="
-          crossorigin="anonymous"></script>
-      <!-- drawer -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.1/umd/react.production.min.js"
-          integrity="sha512-YMtLFKDKe5a4zi7rJ0y4wdGErKZe3tx7L+AXDTxjNDzkv7jsaNhvumeU1xQvw6UqVwBVmYlO9NhsSuSVPUN/xQ=="
-          crossorigin="anonymous"></script>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.1/umd/react-dom.production.min.js"
-        integrity="sha512-vN6rbu+vWW4Ck3s6RbLZs+0gRl5PWOZRUqap38gZtsheSqA2zDeI3PCshuxfYx7ytkoFMrmd0gA2sZZeP1RZYQ=="
-        crossorigin="anonymous"></script>
-      <script src="js/grapher.js"></script>
-      <script src="js/drawer.js"></script>
-      <!-- profiling -->
-      <script src="js/profile.js"></script>
-      <!-- parser -->
-      <script src="vendor/nearley.js"></script>
-      <script src="js/ast.js"></script>
-      <script src="https://unpkg.com/moo@0.5.1/moo.js" crossorigin></script>
-      <script src="js/lexer.js"></script>
-      <!--script src="https://unpkg.com/nearley@2.19.7/lib/nearley.js" crossorigin></script modified-->
-      <script src="js/grammar.js"></script>
-      <!-- ui -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.2/split.min.js"
-          integrity="sha512-to2k78YjoNUq8+hnJS8AwFg/nrLRFLdYYalb18SlcsFRXavCOTfBF3lNyplKkLJeB8YjKVTb1FPHGSy9sXfSdg=="
-          crossorigin="anonymous"></script>
-      <script src="https://unpkg.com/a11y-dialog@5.4.2/a11y-dialog.js" crossorigin></script>
-      <script src="js/nooverflow.js"></script>
-      <!-- debug -->
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.7.2/prop-types.min.js"
-          integrity="sha512-ssNhh7jlzc+K93ckIlSXFHHz6fSFv0l619WOv8xbFNRbFOujbasb42LVMOggDrQR1ScJncoWb+KAJx1uF3ipjw=="
-          crossorigin="anonymous"></script>
-      <script src="vendor/is-node.js"></script>
-      <script src="vendor/react-inspector.js"></script>
+  <section id="script">
+    <!-- editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js"
+      integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw=="
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-sql.min.js"
+      integrity="sha512-wsE6/Wq6h/sr67KuoliMHvnS5FGqI1oW/gvbLgYKtWyfCChHi/T6tt8i+qvaIEdA9+JiW+d+51cA5fRdlfjGtw=="
+      crossorigin="anonymous"></script>
+    <!-- drawer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.1/umd/react.production.min.js"
+      integrity="sha512-YMtLFKDKe5a4zi7rJ0y4wdGErKZe3tx7L+AXDTxjNDzkv7jsaNhvumeU1xQvw6UqVwBVmYlO9NhsSuSVPUN/xQ=="
+      crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.1/umd/react-dom.production.min.js"
+      integrity="sha512-vN6rbu+vWW4Ck3s6RbLZs+0gRl5PWOZRUqap38gZtsheSqA2zDeI3PCshuxfYx7ytkoFMrmd0gA2sZZeP1RZYQ=="
+      crossorigin="anonymous"></script>
+    <script src="js/grapher.js"></script>
+    <script src="js/drawer.js"></script>
+    <!-- profiling -->
+    <script src="js/profile.js"></script>
+    <!-- parser -->
+    <script src="vendor/nearley.js"></script>
+    <script src="js/ast.js"></script>
+    <script src="https://unpkg.com/moo@0.5.1/moo.js" crossorigin></script>
+    <script src="js/lexer.js"></script>
+    <!--script src="https://unpkg.com/nearley@2.19.7/lib/nearley.js" crossorigin></script modified-->
+    <script src="js/grammar.js"></script>
+    <!-- ui -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.6.2/split.min.js"
+      integrity="sha512-to2k78YjoNUq8+hnJS8AwFg/nrLRFLdYYalb18SlcsFRXavCOTfBF3lNyplKkLJeB8YjKVTb1FPHGSy9sXfSdg=="
+      crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/a11y-dialog@5.4.2/a11y-dialog.js" crossorigin></script>
+    <script src="js/nooverflow.js"></script>
+    <!-- debug -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prop-types/15.7.2/prop-types.min.js"
+      integrity="sha512-ssNhh7jlzc+K93ckIlSXFHHz6fSFv0l619WOv8xbFNRbFOujbasb42LVMOggDrQR1ScJncoWb+KAJx1uF3ipjw=="
+      crossorigin="anonymous"></script>
+    <script src="vendor/is-node.js"></script>
+    <script src="vendor/react-inspector.js"></script>
 
-      <!-- JS -->
-  		<script src="js/lib/jquery-1.9.0-min.js"></script>
-          <script src="js/lib/jquery-ui-1.9.2.min.js"></script>
-          <script src="js/lib/jquery.ui.touch-punch-0.2.2.min.js"></script>
+    <!-- JS -->
+    <script src="js/lib/jquery-1.9.0-min.js"></script>
+    <script src="js/lib/jquery-ui-1.9.2.min.js"></script>
+    <script src="js/lib/jquery.ui.touch-punch-0.2.2.min.js"></script>
 
-  		<!-- support lib for bezier stuff -->
-  		<script src="js/lib/jsBezier-0.6.js"></script>
-          <!-- geom functions -->
-          <script src="js/lib/biltong-0.2.js"></script>
-  		<!-- jsplumb util -->
-  		<script src="js/core/util.js"></script>
-          <script src="js/core/browser-util.js"></script>
-          <!-- base DOM adapter -->
-  		<script src="js/core/dom-adapter.js"></script>
-  		<!-- main jsplumb engine -->
-  		<script src="js/core/jsPlumb.js"></script>
-          <!-- endpoint -->
-  		<script src="js/core/endpoint.js"></script>
-          <!-- connection -->
-  		<script src="js/core/connection.js"></script>
-          <!-- anchors -->
-  		<script src="js/core/anchors.js"></script>
-  		<!-- connectors, endpoint and overlays  -->
-  		<script src="js/core/defaults.js"></script>
-          <!-- bezier connectors -->
-          <script src="js/core/connectors-bezier.js"></script>
-  		<!-- state machine connectors -->
-  		<script src="js/core/connectors-statemachine.js"></script>
-          <!-- flowchart connectors -->
-  		<script src="js/core/connectors-flowchart.js"></script>
-          <script src="js/core/connector-editors.js"></script>
-  		<!-- SVG renderer -->
-  		<script src="js/core/renderers-svg.js"></script>
-  		<!-- vml renderer -->
-  		<script src="js/core/renderers-vml.js"></script>
-          <!-- jquery jsPlumb adapter -->
-  		<script src="js/core/jquery.jsPlumb.js"></script>
+    <!-- support lib for bezier stuff -->
+    <script src="js/lib/jsBezier-0.6.js"></script>
+    <!-- geom functions -->
+    <script src="js/lib/biltong-0.2.js"></script>
+    <!-- jsplumb util -->
+    <script src="js/core/util.js"></script>
+    <script src="js/core/browser-util.js"></script>
+    <!-- base DOM adapter -->
+    <script src="js/core/dom-adapter.js"></script>
+    <!-- main jsplumb engine -->
+    <script src="js/core/jsPlumb.js"></script>
+    <!-- endpoint -->
+    <script src="js/core/endpoint.js"></script>
+    <!-- connection -->
+    <script src="js/core/connection.js"></script>
+    <!-- anchors -->
+    <script src="js/core/anchors.js"></script>
+    <!-- connectors, endpoint and overlays  -->
+    <script src="js/core/defaults.js"></script>
+    <!-- bezier connectors -->
+    <script src="js/core/connectors-bezier.js"></script>
+    <!-- state machine connectors -->
+    <script src="js/core/connectors-statemachine.js"></script>
+    <!-- flowchart connectors -->
+    <script src="js/core/connectors-flowchart.js"></script>
+    <script src="js/core/connector-editors.js"></script>
+    <!-- SVG renderer -->
+    <script src="js/core/renderers-svg.js"></script>
+    <!-- vml renderer -->
+    <script src="js/core/renderers-vml.js"></script>
+    <!-- jquery jsPlumb adapter -->
+    <script src="js/core/jquery.jsPlumb.js"></script>
 
-  		<!--  jsWorkflow -->
-  		<script src="js/lib/jsWorkflow.js"></script>
+    <!--  jsWorkflow -->
+    <script src="js/lib/jsWorkflow.js"></script>
 
 
-      <!-- main -->
-      <script src="js/index.js"></script>
-    </section>
-  </body>
+    <!-- main -->
+    <script src="js/index.js"></script>
+  </section>
+</body>
+
 </html>
