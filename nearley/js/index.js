@@ -7,8 +7,6 @@ jsWorkflow.ready(function () {
   let globalNodes, globalEdges;
   // $("#graph").hide();
 
-
-
   function getStorage(tag) {
     return localStorage.getItem('saved-' + tag)
   }
@@ -167,6 +165,11 @@ jsWorkflow.ready(function () {
     }
     globalNodes = res.nodes;
     globalEdges = res.edges;
+
+    // Todo:
+    //  The mocked data should be used in draw()
+    var mockData = getMockData(selectExample);
+
     draw(res.nodes, res.edges);
   }
 

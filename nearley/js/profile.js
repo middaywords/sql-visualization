@@ -1,19 +1,19 @@
 (function (root, factory) {
-    if (typeof define === 'function' && define.amd) {
-      define([], factory);
-    } else if (typeof exports === 'object' && module.exports) {
-      module.exports = factory();
-    } else {
-      root.profileData = factory()
-    }
-  }(this, function () {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.profileData = factory()
+  }
+}(this, function () {
   'use strict'
 
   var nodeCount;
 
   function profileData(item) {
-      nodeCount = 0;
-      return recursiveSearch(item, nodeCount);
+    nodeCount = 0;
+    return recursiveSearch(item, nodeCount);
   }
 
   function recursiveSearch(item, parent_id) {
@@ -30,7 +30,7 @@
           depth: 1
         });
         edges.push({
-          from: parent_id, 
+          from: parent_id,
           to: nodeCount
         });
         let subset = recursiveSearch(column, nodeCount);
@@ -48,10 +48,10 @@
           type: 'Column'
         });
         edges.push({
-          from: parent_id, 
+          from: parent_id,
           to: nodeCount
         });
-      } 
+      }
       for (let value of item.froms.values()) {
         let subset = recursiveSearch(value, nodeCount);
         nodes = nodes.concat(subset.nodes);
@@ -66,7 +66,7 @@
         type: 'Expression'
       });
       edges.push({
-        from: parent_id, 
+        from: parent_id,
         to: nodeCount
       });
       parent_id = nodeCount;
@@ -84,11 +84,11 @@
         type: 'Table'
       });
       edges.push({
-        from: parent_id, 
+        from: parent_id,
         to: nodeCount
       });
     }
-  
+
     return {
       nodes: nodes,
       edges: edges
