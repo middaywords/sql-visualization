@@ -5,7 +5,7 @@ Tasks
 
 - [x] Parse scripts
 - [x] Get parsed results
-- [ ] Visualization
+- [x] Visualization
 
 Setup:
 
