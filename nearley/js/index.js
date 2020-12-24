@@ -1,11 +1,8 @@
 'use strict'
-jsWorkflow.ready(function () {
 
 
   const SMALL_SCREEN_WIDTH = 544
   const EXAMPLE_LIST = ['sql-script2', 'sql-script3']
-  let globalNodes, globalEdges;
-  // $("#graph").hide();
 
   function getStorage(tag) {
     return localStorage.getItem('saved-' + tag)
@@ -156,21 +153,13 @@ jsWorkflow.ready(function () {
 
     console.log(graph.graph);
     let res = profileData(graph.graph);
-    // console.log(JSON.stringify(res.nodes));
-    // console.log(JSON.stringify(res.edges));
-    // console.log(res.nodes);
-    // console.log(res.edges);
-    for (var i = 0; i < res.nodes.length; i++) {
-      res.nodes[i].depth = 1;
-    }
-    globalNodes = res.nodes;
-    globalEdges = res.edges;
+
 
     // Todo:
     //  The mocked data should be used in draw()
     var mockData = getMockData(selectExample);
 
-    draw(res.nodes, res.edges);
+    draw(res.nodes, res.edges, mockData);
   }
 
 
@@ -333,18 +322,183 @@ jsWorkflow.ready(function () {
     return AST.parse(text)
   }
 
-  $("#graph").hide();
-  $("#show-graph").click(function () {
-    $("#main").hide();
-    $("#graph").show();
-    draw(globalNodes, globalEdges);
+  function init() {
+    if (window.goSamples) goSamples();  // init for these samples -- you don't need to call this
+    var $ = go.GraphObject.make;
 
-  });
-  $("#refresh-workflow").click(function () {
-    draw(globalNodes, globalEdges);
-  });
-  $("#back-edit").click(function () {
-    $("#main").show();
-    $("#graph").hide();
-  });
-});
+    let myDiagram =
+        $(go.Diagram, "diagram-container", // must be the ID or reference to an HTML DIV
+            {
+              layout: $(go.LayeredDigraphLayout, { direction: 90, layerSpacing: 10, setsPortSpots: false }),
+              "undoManager.isEnabled": true  // enable undo & redo
+            });
+
+    // when the document is modified, add a "*" to the title and enable the "Save" button
+    myDiagram.addDiagramListener("Modified", function(e) {
+      var button = document.getElementById("SaveButton");
+      if (button) button.disabled = !myDiagram.isModified;
+      var idx = document.title.indexOf("*");
+      if (myDiagram.isModified) {
+        if (idx < 0) document.title += "*";
+      } else {
+        if (idx >= 0) document.title = document.title.substr(0, idx);
+      }
+    });
+
+    function tooltipTextConverter(person){
+      var str = "";
+      str += person.value;
+      return str;
+    }
+    var tooltiptemplate =
+        $("ToolTip",
+            {"Border.fill":"whitesmoke","Border.stroke":"black"},
+            $(go.TextBlock,
+                {
+                  font:"bold 14pt Helvetica,bold Arial,sans-serif",
+                  wrap:go.TextBlock.WrapFit,
+                  margin:5
+                },
+                new go.Binding("text","",tooltipTextConverter))
+        );
+
+    // define the step Node template
+    myDiagram.nodeTemplateMap.add("step",
+        $(go.Node, "Auto",
+            { locationSpot: go.Spot.Center },
+            new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+            $(go.Shape, "Rectangle",
+                {
+                  fill: "whitesmoke",
+                  stroke: "gray",
+                  strokeWidth: 2,
+                  // desiredSize: new go.Size(160, 60),
+                  portId: "",  // so that links connect to the Shape, not to the whole Node
+                  fromSpot: go.Spot.BottomSide,
+                  toSpot: go.Spot.TopSide,
+                  alignment: go.Spot.Center
+                }),
+            $(go.TextBlock,
+                {
+                  font: "bold 16px sans-serif",
+                  alignment: go.Spot.Center,
+                  wrap: go.TextBlock.WrapFit,
+                  editable: true,
+                  margin: 10,
+
+                },
+                new go.Binding("text", "text").makeTwoWay()),
+
+        ));
+    myDiagram.nodeTemplateMap.add("step_value",
+        $(go.Node, "Auto",
+            {toolTip: tooltiptemplate},
+            { locationSpot: go.Spot.Center },
+            new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+            $(go.Shape, "Rectangle",
+                {
+                  fill: "whitesmoke",
+                  stroke: "#00A9C9",
+                  strokeWidth: 2,
+                  // desiredSize: new go.Size(160, 60),
+                  portId: "",  // so that links connect to the Shape, not to the whole Node
+                  fromSpot: go.Spot.BottomSide,
+                  toSpot: go.Spot.TopSide,
+                  alignment: go.Spot.Center
+                }),
+            $(go.TextBlock,
+                {
+                  font: "bold 16px sans-serif",
+                  alignment: go.Spot.Center,
+                  wrap: go.TextBlock.WrapFit,
+                  editable: true,
+                  margin: 10,
+
+                },
+                new go.Binding("text", "text").makeTwoWay()),
+
+        ));
+
+    // // define the transition Node template.
+    // myDiagram.nodeTemplateMap.add("transition",
+    //     $(go.Node, "Horizontal",
+    //         { locationSpot: go.Spot.Center, locationObjectName: "BAR" },
+    //         new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+    //         $(go.Shape, "Rectangle",
+    //             {
+    //               name: "BAR",
+    //               fill: "black",
+    //               stroke: null,
+    //               desiredSize: new go.Size(60, 8),
+    //               portId: "",
+    //               fromSpot: go.Spot.BottomSide,
+    //               toSpot: go.Spot.TopSide
+    //             }),
+    //         $(go.TextBlock,
+    //             { editable: true, margin: 3 },
+    //             new go.Binding("text", "text").makeTwoWay())
+    //     ));
+    //
+    // // define the parallel Node template.
+    // myDiagram.nodeTemplateMap.add("parallel",
+    //     $(go.Node,
+    //         { locationSpot: go.Spot.Center },
+    //         new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+    //         $(go.Shape, "Rectangle",
+    //             {
+    //               fill: "whitesmoke",
+    //               stroke: "black",
+    //               fromSpot: go.Spot.Bottom,
+    //               toSpot: go.Spot.Top,
+    //               desiredSize: new go.Size(200, 6),
+    //               portId: "",
+    //               fromSpot: go.Spot.BottomSide,
+    //               toSpot: go.Spot.TopSide
+    //             })
+    //     ));
+
+    // define the Link template
+    myDiagram.linkTemplate =
+        $(go.Link,
+            { routing: go.Link.Orthogonal },
+            $(go.Shape,
+                { stroke: "black", strokeWidth: 2 }),
+            $(go.Shape,
+                {
+                  stroke: null,
+                  toArrow: "Standard",
+                })
+        );
+    return myDiagram;
+  }
+  let diagram = init();
+
+// let graph = { "class": "go.GraphLinksModel",
+//   "nodeDataArray": [
+//     {"key":"S1", "category":"step", "text":"Step 1"},
+//     {"key":"TR1", "category":"transition", "text":"Transition 1"},
+//     {"key":"S2", "category":"step", "text":"Step 2"},
+//     {"key":"TR2", "category":"transition", "text":"Transition 2"},
+//     {"key":"BAR1", "category":"parallel" },
+//     {"key":"S3", "category":"step", "text":"Step 3"},
+//     {"key":"S4", "category":"step", "text":"Step 4"},
+//     {"key":"BAR2", "category":"parallel" },
+//     {"key":"TR3", "category":"transition", "text":"Transition 3"},
+//     {"key":"S5", "category":"step", "text":"Step 5"}
+//   ],
+//   "linkDataArray": [
+//     {"from":"S1", "to":"TR1"},
+//     {"from":"TR1", "to":"S2"},
+//     {"from":"S2", "to":"TR2"},
+//     {"from":"TR2", "to":"BAR1"},
+//     {"from":"BAR1", "to":"S3"},
+//     {"from":"BAR1", "to":"S4"},
+//     {"from":"S3", "to":"BAR2"},
+//     {"from":"S4", "to":"BAR2"},
+//     {"from":"BAR2", "to":"TR3"},
+//     {"from":"TR3", "to":"S5"}
+//   ]};
+
+  function load(graph) {
+    diagram.model = go.Model.fromJson(graph);
+  }
