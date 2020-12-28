@@ -52,7 +52,7 @@
                 return [
                     {
                         entity_code: 'China',
-                        company: '3b185b2c-28dd-49bd-8037-78157eb72b3b',
+                        company: 'Fakebook',
                         account: 'd0b7cec8-fec6-4fee-94c3-a0bcea6b62be',
                         prod_num: 15,
                         ccy: 'CNY',
@@ -66,7 +66,7 @@
                     },
                     {
                         entity_code: 'China',
-                        company: '3b185b2c-28dd-49bd-8037-78157eb72b3b',
+                        company: 'TechLei',
                         account: 'd0b7cec8-fec6-4fee-94c3-a0bcea6b62be',
                         prod_num: 47,
                         ccy: 'CNY',
@@ -80,7 +80,7 @@
                     },
                     {
                         entity_code: 'China',
-                        company: '3b185b2c-28dd-49bd-8037-78157eb72b3b',
+                        company: 'YouChat',
                         account: 'd0b7cec8-fec6-4fee-94c3-a0bcea6b62be',
                         prod_num: 47,
                         ccy: 'CNY',
